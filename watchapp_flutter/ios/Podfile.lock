@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - image_picker (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `/Users/mysoul/Desktop/flutter/bin/cache/artifacts/engine/ios`)
+  - image_picker (from `/Users/mysoul/.pub-cache/hosted/pub.dartlang.org/image_picker-0.1.1/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: "/Users/mysoul/Desktop/flutter/bin/cache/artifacts/engine/ios"
+  image_picker:
+    :path: "/Users/mysoul/.pub-cache/hosted/pub.dartlang.org/image_picker-0.1.1/ios"
+
+SPEC CHECKSUMS:
+  Flutter: d674e78c937094a75ac71dd77e921e840bea3dbf
+  image_picker: a211f28b95a560433c00f5cd3773f4710a20404d
+
+PODFILE CHECKSUM: 351e02e34b831289961ec3558a535cbd2c4965d2
+
+COCOAPODS: 1.2.1
