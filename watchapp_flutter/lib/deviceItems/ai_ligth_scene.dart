@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class AiLightScene extends StatefulWidget{
 
@@ -21,6 +22,10 @@ class _AiLightSceneState extends State<AiLightScene>{
   ];
 
   List<Widget> colorsRowList = <Widget>[];
+
+  Color lightColor = Colors.white;
+  double angle = 0.0;
+  Color touchColor = Colors.black;
 
   @override
   void initState(){
@@ -48,6 +53,24 @@ class _AiLightSceneState extends State<AiLightScene>{
         child: new FlatButton(
             onPressed: (){
               print('$index and $imageName');
+              switch (index){
+                case 0:
+                  lightColor = new Color.fromRGBO(243, 223, 174, 1.0);
+                  break;
+                case 1:
+                  lightColor = new Color.fromRGBO(84, 175, 237, 1.0);
+                  break;
+                case 2:
+                  lightColor = new Color.fromRGBO(89, 220, 125, 1.0);
+                  break;
+                case 3:
+                  lightColor = new Color.fromRGBO(223, 108, 229, 1.0);
+                  break;
+                case 4:
+
+                  break;
+              }
+              setState((){});
             },
             child: new Image(image: new AssetImage(imageName))
         ),
@@ -68,20 +91,74 @@ class _AiLightSceneState extends State<AiLightScene>{
                 new Expanded(child: new Stack(
                   alignment: Alignment.topCenter,
                   children: <Widget>[
-                    new Padding(
-                      padding: const EdgeInsets.all(47.0),
-                      child: new SizedBox(
-                        width: 180.0,
-                        height: 188.0,
-                        child: new Image(image: const AssetImage('images/img_light2.png')),
+                    new Container(
+                      padding: const EdgeInsets.fromLTRB(0.0, 48.0, 0.0, 50.0),
+                      child: new Stack(
+                        alignment: Alignment.center,
+                        children: <Widget>[
+                          new SizedBox(
+                            width: 171.0,
+                            height: 171.0,
+                            child: new Transform.rotate(
+                              angle: angle,
+                              child: new Image(image: const AssetImage('images/img_light2.png')),
+                            )
+                          ),
+                          new Container(
+                            width: 154.0,
+                            height: 154.0,
+                            decoration: new BoxDecoration(
+                              color: lightColor,
+                              borderRadius: new BorderRadius.all(new Radius.circular(77.0))
+                            ),
+                          )
+                        ],
                       ),
                     ),
-                    new Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: new SizedBox(
-                        width: 200.0,
-                        height: 210.0,
-                        child: new Image(image: const AssetImage('images/img_light_round.png')),
+                    new GestureDetector(
+                      onTapDown: (TapDownDetails details){
+                        var positionX = details.globalPosition.dx;
+                        var positionY = details.globalPosition.dy;
+
+                        var editX = 180.0-positionX;
+                        var editY = 205.0-positionY;
+
+                        setState((){
+                          if(positionY < 205.0){
+                            angle = -math.atan(editX/editY);
+                          }else{
+                            var tmpAngle = -math.atan(editX/editY) + math.PI;
+                            if(tmpAngle > -math.PI*2/3 && tmpAngle < math.PI*2/3 || tmpAngle>4.21){
+                              angle = tmpAngle;
+                            }
+                          }
+                        });
+                      },
+                      onHorizontalDragUpdate: (DragUpdateDetails details){
+                        var positionX = details.globalPosition.dx;
+                        var positionY = details.globalPosition.dy;
+
+                        var editX = 180.0-positionX;
+                        var editY = 205.0-positionY;
+
+                        setState((){
+                          if(positionY < 205.0){
+                            angle = -math.atan(editX/editY);
+                          }else{
+                            var tmpAngle = -math.atan(editX/editY) + math.PI;
+                            if(tmpAngle > -math.PI*2/3 && tmpAngle < math.PI*2/3 || tmpAngle>4.21){
+                              angle = tmpAngle;
+                            }
+                          }
+                        });
+                      },
+                      child: new Container(
+                        padding: const EdgeInsets.all(10.0),
+                        child: new SizedBox(
+                          width: 190.0,
+                          height: 200.0,
+                          child: new Image(image: const AssetImage('images/img_light_round.png')),
+                        ),
                       ),
                     ),
                     new Padding(

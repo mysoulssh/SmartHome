@@ -1,0 +1,28 @@
+syntax = "proto3";
+package UserFRSConfirm; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6724
+//;Name string = "UserFRSConfirm"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// true; 被建立关系的用户ID
+	string relation_user_name = 11;
+	// true; 进行关系确认； 2，同意；3 拒绝  (被对方拒绝的关系可以再次编辑和申请)
+	uint32 action = 12;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

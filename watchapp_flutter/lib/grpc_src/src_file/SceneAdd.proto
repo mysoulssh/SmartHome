@@ -1,0 +1,34 @@
+syntax = "proto3";
+package SceneAdd; // namespace
+
+import "iot_comm.proto";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6301
+//;Name string = "SceneAdd"
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	string house_guid = 11;
+	string scene_name = 12;
+	IOTCMD cmd = 13;
+	string scene_id = 14; 
+	// 默认场景为非空，用户添加时该值为空;
+	// 1: 在家; 固定scene_id: 0a0a79f667629ea6cecd8dc225ffefb0
+	// 2: 离家; 固定scene_id: b2f2363f56da29b458ce80e64db856c0
+	// 3: 起床; 固定scene_id: abff0f9c08f344ec9a77d992829b7922
+	// 4: 睡觉; 固定scene_id: 94013c4ed339c072d869dddc2577105d
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

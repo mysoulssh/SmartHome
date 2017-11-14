@@ -1,0 +1,29 @@
+syntax = "proto3";
+package DeviceVerSet; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6001
+//;Name string = "DeviceVerSet"
+
+
+// 请求方填写
+message RpcRequest {
+	string device_id = 1;
+	string device_seckey = 2;
+	
+	string sub_device_id = 3;
+	// 版本格式: 3.33.01 = 33301
+	// 只能累加，不能减少
+	int32 sw_ver = 11;
+	int32 hw_ver = 12;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

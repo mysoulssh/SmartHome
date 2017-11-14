@@ -1,0 +1,26 @@
+syntax = "proto3";
+package DeviceHubDeviceAdd; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6010
+//;Name string = "DeviceHubDeviceAdd"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; 
+	string device_id = 1;
+	string device_seckey = 2;
+
+	repeated string sub_device_id = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

@@ -1,0 +1,43 @@
+syntax = "proto3";
+package DeviceStatusGet; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6009
+//;Name string = "DeviceStatusGet"
+
+message QueryInfo {
+	string device_id = 1;
+	string sub_device_id = 2;
+}
+
+message StatusInfo {
+	string device_id = 8;
+	string sub_device_id = 1;
+	uint32 online = 2; // 1: online ; 2: offline
+	uint32 time_stamp = 3;
+
+	// 当前最新的状态信息
+	int32 cmdid = 4; // 0 忽略后面参数
+	repeated int32 arg_int32 = 5; // 如果有float 扩大相应精度，转化为INT
+    repeated string arg_string = 6;
+    bytes arg_bytes = 7;
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	repeated QueryInfo devs = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+	repeated StatusInfo status = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

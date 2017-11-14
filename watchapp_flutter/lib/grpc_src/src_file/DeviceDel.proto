@@ -1,0 +1,32 @@
+syntax = "proto3";
+package DeviceDel; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6413
+//;Name string = "DeviceDel"
+
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	client_id = 1; 
+	// true;单位秒,请求时间戳，在该时间开始的15分钟内该请求有效，放置数据重放攻击.
+	int64	req_time = 2; 
+	// true;签名字串,计算方法： md5(req_time + client_srcret)
+	string sign_key = 3; 
+
+	// true; 产品编号
+	string device_id = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+	// true; 设备ID
+	string device_id = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

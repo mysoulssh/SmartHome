@@ -1,0 +1,41 @@
+syntax = "proto3";
+package ProductEdit; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6407
+//;Name string = "ProductEdit"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+    // true; 产品编号(条件)
+    string product_code = 10;
+
+	// true; 产品名称
+	string product_name = 11;
+	// true; 公司代码
+	string company_code = 12;
+    // true; 产品图片(文件ID)
+    string pic1 = 13;
+    // true; 产品图片(文件ID)
+    string pic2 = 14;
+    // false; 备注
+    string remark = 15;
+	repeated string nbi_code = 16;
+	repeated string prodt_code = 17;
+}
+
+// 返回方填写
+message RpcResponse {
+	// true; 产品唯一编号
+	string product_code = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

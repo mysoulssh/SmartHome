@@ -1,0 +1,56 @@
+syntax = "proto3";
+package UserLogin; // namespace
+
+option objc_class_prefix = "UserLogin";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6703
+//;Name string = "UserLogin"
+
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	client_id = 1; 
+	// true;单位秒,请求时间戳，在该时间开始的15分钟内该请求有效，放置数据重放攻击.
+	int64	req_time = 2; 
+	// true;签名字串,计算方法： md5(req_time + client_srcret)
+	string sign_key = 3; 
+
+	// true; user_name / user_id 两个必须选择一个 (目前选择 user_name)
+    string user_name = 5;
+	uint32 user_id = 6;
+	// true;用户密码，密码或者指纹特征码必须2选1(md5) (目前选择 password)
+	string password = 7; 
+	// true;指纹特征码，密码或者指纹特征码必须2选1
+	bytes finger = 8;
+	
+	// 登录附加信息
+	// true;登录类别: 1 App; 2 web; 3 智能终端(一体机)
+	uint32 login_type = 11;
+	// true;用户登录使用的设备ID（如果通过一体机登录，则使用设备的deviceid，如果通过其它设备登录则去其它设备的ID）
+	// ios,id; huawei,id; jpush,id
+	// login_deviceid 取决于使用什么推送系统获得的ID
+	string login_deviceid = 12;
+	// true;用户使用语言
+	string login_lang = 13;
+    uint32 login_os = 14; // 1: Android Phone; 2: IOS Phone; 3: Win Phone; 11: Android Pad; 12: IOS Pad; 3: Win PC 
+}
+
+// 返回方填写
+message RpcResponse {
+   // true;用户ID
+    uint32 user_id = 1;
+	// true;访问token，后续其它接口需要使用.
+	string access_token = 2;
+	// true;刷新token，在access_token到期之前可以通过该token刷新access_token
+	string refresh_token = 3;
+	// true;access_token 超时时间。当前时间加上该时间,是失效时间. 
+	int64 expired_time = 4;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

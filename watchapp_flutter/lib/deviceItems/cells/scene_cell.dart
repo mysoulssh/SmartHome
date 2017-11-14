@@ -65,7 +65,7 @@ class _SceneCellState extends State<SceneCell>{
             ),
             new Expanded(child: new Container(
               padding: const EdgeInsets.only(bottom: 1.0),
-              color: Colors.grey,
+              color: new Color.fromRGBO(214, 214, 214, 1.0),
               child: new Container(
                 color: Colors.white,
                 child: new Row(

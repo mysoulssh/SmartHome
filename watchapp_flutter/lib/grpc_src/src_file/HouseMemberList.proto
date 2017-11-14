@@ -1,0 +1,32 @@
+syntax = "proto3";
+package HouseMemberList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6217
+//;Name string = "HouseMemberList"
+
+message MemberInfo {
+	uint32 user_id = 1;
+	int32 role = 2;
+	int32 is_confirm = 3;
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// 如果为空，返回所有家庭信息
+	string house_guid = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+    repeated MemberInfo users = 2;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

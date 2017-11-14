@@ -1,0 +1,24 @@
+syntax = "proto3";
+package UserLogout; // namespace
+
+option objc_class_prefix = "UserLogout";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6704
+//;Name string = "UserLogout"
+
+
+// 请求方填写
+message RpcRequest {
+	string 	access_token = 1; 
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

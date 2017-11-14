@@ -1,0 +1,28 @@
+syntax = "proto3";
+package DeviceFailcodeSet; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6008
+//;Name string = "DeviceFailcodeSet"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; 
+	string device_id = 1;
+	string device_seckey = 2;
+
+	string sub_device_id = 11;
+	uint32 fail_code = 12;
+	uint32 time_stamp = 13; // UTC时间，单位Sec
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

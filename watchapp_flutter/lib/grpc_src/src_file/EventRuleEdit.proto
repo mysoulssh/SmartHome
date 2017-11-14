@@ -1,0 +1,38 @@
+syntax = "proto3";
+package EventRuleEdit; // namespace
+
+import "iot_comm.proto";
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6308
+//;Name string = "EventRuleEdit"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+	
+	// 编辑条件
+	string et_id = 11;
+	// 编辑内容
+	string device_id = 20;
+	string et_name = 21;
+    //int32 prio = 22;
+    //int32 enable = 23;
+    int32 only_time = 24;
+    string lhs = 25;
+   
+    repeated ExprInfo exprs = 26;
+    repeated RhsInfo rhs = 27;
+	int32 is_end = 28;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

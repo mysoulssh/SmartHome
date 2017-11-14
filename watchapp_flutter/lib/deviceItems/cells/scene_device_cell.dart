@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:watchapp_flutter/deviceItems/ai_ligth_scene.dart';
 import 'package:watchapp_flutter/deviceItems/ai_window_scene.dart';
+import 'package:watchapp_flutter/deviceItems/ai_switch_scene.dart';
+import 'package:watchapp_flutter/deviceItems/ai_setting_scene.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
 import 'package:watchapp_flutter/Tools/right_btn.dart';
+
 
 class DeviceSceneCell extends StatefulWidget{
 
@@ -28,6 +31,13 @@ class _DeviceSceneCellState extends State<DeviceSceneCell>{
 
   }
 
+  void pushToSettingScene(DeviceType type,String name){
+    AiSettingScene settingScene = new AiSettingScene(type,name);
+    Navigator.of(context).push(new MaterialPageRoute(
+        builder: (BuildContext context) => new NavigationBar(settingScene, name)
+    ));
+  }
+
   @override
   Widget build(BuildContext context){
     return new GestureDetector(
@@ -40,7 +50,7 @@ class _DeviceSceneCellState extends State<DeviceSceneCell>{
               builder: (BuildContext context) => new NavigationBar(lightSecen, _name,
                 actions: <Widget>[
                   new RightBtnItem('设置', (){
-
+                    pushToSettingScene(DeviceType.lightType, _name);
                   })
                 ]
               ))
@@ -51,10 +61,21 @@ class _DeviceSceneCellState extends State<DeviceSceneCell>{
               builder: (BuildContext context) => new NavigationBar(windowScene, _name,
                   actions: <Widget>[
                     new RightBtnItem('设置', (){
-
+                      pushToSettingScene(DeviceType.windowType, _name);
                     })
                   ]
               ))
+          );
+        }else if (_name == '开关'){
+          AiSwitchScene switchScene = new AiSwitchScene(isSwitchOn: false,);
+          Navigator.of(context).push(new MaterialPageRoute(
+              builder: (BuildContext context) => new NavigationBar(switchScene, _name,
+                  actions: <Widget>[
+                    new RightBtnItem('设置', (){
+                      pushToSettingScene(DeviceType.switchType, _name);
+                    })
+                  ]
+              )),
           );
         }
       },
@@ -72,7 +93,7 @@ class _DeviceSceneCellState extends State<DeviceSceneCell>{
             ),
             new Expanded(child: new Container(
               padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 1.0),
-              color: Colors.grey,
+              color: new Color.fromRGBO(214, 214, 214, 1.0),
               child: new Container(
                 color: Colors.white,
                 child: new Row(

@@ -1,0 +1,27 @@
+syntax = "proto3";
+package UserDeviceUseDel; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6110
+//;Name string = "UserDeviceUseDel"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+    // 删除条件(全部满足)
+	string device_id = 11;
+    uint32 use_user_id = 12;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

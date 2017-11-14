@@ -1,0 +1,47 @@
+syntax = "proto3";
+package ProductList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6409
+//;Name string = "ProductList"
+
+message ProductInfo {
+    string product_name = 1;
+    string company_code = 2;
+    string pic1 = 3;
+	string pic2 = 4;
+	string remark = 5;
+	uint32 is_review = 6; // 0, 等待审核；1， 审核通过；2，审核拒绝 
+	string review_mark = 7; // 如果is_review=2 ;该处为拒绝理由
+
+	repeated string nbi_code = 16;
+	repeated string prodt_code = 17;
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// 分页信息
+    // true;第几页数据，数据是按照默认排序从 (page-1) * page_size 到 page * page_size 之间的数据
+	uint32 page = 11;
+	// true; 每页多少条数据
+	uint32 page_size = 12;
+
+    // 检索条件
+    string company_code = 21;
+    string name = 22;
+}
+
+// 返回方填写
+message RpcResponse {
+    uint32 total = 11;
+	repeated ProductInfo products = 12;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

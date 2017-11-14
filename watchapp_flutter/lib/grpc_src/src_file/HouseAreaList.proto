@@ -1,0 +1,33 @@
+syntax = "proto3";
+package HouseAreaList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6208
+//;Name string = "HouseAreaList"
+
+message AreaInfo {
+	string house_guid = 1;
+	string area_guid = 2;
+	string area_name = 3;
+	int32 is_default = 4; // 1 默认区域，其余为0
+
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	string house_guid = 21;
+}
+
+// 返回方填写
+message RpcResponse {
+	repeated AreaInfo areas = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

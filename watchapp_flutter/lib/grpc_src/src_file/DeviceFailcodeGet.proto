@@ -1,0 +1,37 @@
+syntax = "proto3";
+package DeviceFailcodeGet; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6007
+//;Name string = "DeviceFailcodeGet"
+
+message QueryInfo {
+	string device_id = 1;
+	string sub_device_id = 2;
+}
+
+message FailcodeInfo {
+	string device_id = 1;
+	string sub_device_id = 2;
+	uint32 fail_code = 3;
+	uint32 time_stamp = 4;
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	repeated QueryInfo query = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+	repeated FailcodeInfo failcodes = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

@@ -1,0 +1,35 @@
+syntax = "proto3";
+package ScenePull; // namespace
+
+import "iot_comm.proto";
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6311
+//;Name string = "ScenePull"
+
+// 请求方填写
+message RpcRequest {
+	// true; 
+	string device_id = 1;
+	string device_seckey = 2;
+
+	// 分页信息
+	// page / page_size 都为0表示获取所有数据
+    // true;第几页数据，数据是按照默认排序从 (page-1) * page_size 到 page * page_size 之间的数据
+	uint32 page = 11;
+	// true; 每页多少条数据
+	uint32 page_size = 12;
+	//
+	int32 sync_flag = 21; // 1: 只同步没有同步的记录; 2: 同步已经同步的记录; 3: 同步所有记录
+}
+
+// 返回方填写
+message RpcResponse {
+	uint32 total = 1;
+	repeated SceneInfo scenes = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

@@ -1,0 +1,34 @@
+syntax = "proto3";
+package IotCmdAdd; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6415
+//;Name string = "IotCmdAdd"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+    string prodt_code = 10;
+	uint32 cmdid = 11;
+    uint32 cmd_type = 12;
+    string detail_en = 13;
+    string detail_cn = 14;
+    string arg_type = 15;
+    string arg_v = 16;
+    string arg_detail_en = 17;
+    string arg_detail_cn = 18;
+}
+
+// 返回方填写
+message RpcResponse {
+	uint32 cmdid = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

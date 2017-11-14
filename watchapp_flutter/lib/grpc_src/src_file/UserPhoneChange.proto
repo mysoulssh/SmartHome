@@ -1,0 +1,30 @@
+syntax = "proto3";
+package UserPhoneChange; // namespace
+
+option objc_class_prefix = "UserPhoneChange";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6707
+//;Name string = "UserPhoneChange"
+
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	access_token = 1; 
+
+	string old_phone = 11;
+    string old_vcode = 12; // 验证码
+    string new_phone = 13; 
+    string new_vcode = 14; 
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

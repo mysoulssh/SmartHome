@@ -22,6 +22,7 @@ class _DeviceSceneState extends State<DeviceScene>{
     _cell.add(new DeviceSceneCell(image: new Image(image: const AssetImage('images/testIcon.jpg')),deviceName: '小米55寸智能电视',isDeviceOnline: true,isTurnOn: false,));
     _cell.add(new DeviceSceneCell(image: new Image(image: const AssetImage('images/testIcon.jpg')),deviceName: '节能灯',isDeviceOnline: false,isTurnOn: false,));
     _cell.add(new DeviceSceneCell(image: new Image(image: const AssetImage('images/testIcon.jpg')),deviceName: '窗帘',isDeviceOnline: true,isTurnOn: true,));
+    _cell.add(new DeviceSceneCell(image: new Image(image: const AssetImage('images/testIcon.jpg')),deviceName: '开关',isDeviceOnline: true,isTurnOn: false,));
   }
 
   @override

@@ -1,0 +1,39 @@
+syntax = "proto3";
+package UserRefreshToken; // namespace
+
+option objc_class_prefix = "UserRefreshToken";
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6706
+//;Name string = "UserRefreshToken"
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	client_id = 1; 
+	// true;单位秒,请求时间戳，在该时间开始的15分钟内该请求有效，放置数据重放攻击.
+	int64	req_time = 2; 
+	// true;签名字串,计算方法： md5(req_time + client_srcret)
+	string sign_key = 3; 
+	
+	// true; 用户手机号码
+	string user_name = 11;
+	// true;refresh_token
+	string refresh_token = 12;
+}
+// 返回方填写
+message RpcResponse {
+    // true;用户ID
+    uint32 user_id = 1;
+	// true;访问token，后续其它接口需要使用.
+	string access_token = 2;
+	// true;刷新token，在access_token到期之前可以通过该token刷新access_token
+	string refresh_token = 3;
+	// true;access_token 超时时间。当前时间加上该时间,是失效时间. 
+	int64 expired_time = 4;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

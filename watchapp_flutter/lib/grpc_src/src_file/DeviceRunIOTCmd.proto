@@ -1,0 +1,27 @@
+syntax = "proto3";
+package DeviceRunIOTCmd; // namespace
+
+import "iot_comm.proto";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6014
+//;Name string = "DeviceRunIOTCmd"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; 
+	string access_token = 1;
+
+    IOTCMD cmd = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

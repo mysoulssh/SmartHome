@@ -1,0 +1,39 @@
+syntax = "proto3";
+package UserFRSList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6723
+//;Name string = "UserFRSList"
+
+message FRSInfo {
+	// true;被建立关系的用户ID
+	string user_name = 1;
+	// true;关系描述
+	uint32 relation_code = 2;
+	// true;关系描述是否被系统或者对方确认，0,未确认关系；1，系统正在审核关系；2，已经确认关系成立;3,对方拒绝建立关系
+	uint32 is_confirm = 3;
+	// true; 添加关系时间戳，单位秒
+	uint32 create_time = 4;
+	// true; 用户ID
+	uint32 user_id = 6;
+	uint32 relation_user_id = 7;
+	// true; 备注
+	string remark = 9;
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+}
+
+// 返回方填写
+message RpcResponse {
+	repeated FRSInfo frs = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

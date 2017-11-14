@@ -1,0 +1,31 @@
+syntax = "proto3";
+package UserLostPass; // namespace
+
+option objc_class_prefix = "UserLostPass";
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6705
+//;Name string = "UserLostPass"
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	client_id = 1; 
+	// true;单位秒,请求时间戳，在该时间开始的15分钟内该请求有效，放置数据重放攻击.
+	int64	req_time = 2; 
+	// true;签名字串,计算方法： md5(req_time + client_srcret)
+	string sign_key = 3; 
+	
+	// true; 用户手机号码
+	string user_name = 11;
+    string vcode = 12; // 手机接收到的校验码
+	string new_pass = 13; // 用户新密码, 明文
+}
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

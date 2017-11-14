@@ -1,0 +1,36 @@
+syntax = "proto3";
+package UserReg; // namespace
+
+option objc_class_prefix = "UserReg";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6702
+//;Name string = "UserReg"
+
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	client_id = 1; 
+	// true;单位秒,请求时间戳，在该时间开始的15分钟内该请求有效，放置数据重放攻击.
+	int64	req_time = 2; 
+	// true;签名字串,计算方法： md5(req_time + client_srcret)
+	string sign_key = 3; 
+
+	// true; 用户手机号码(当出现更换手机号码时可以要求一次发送2个手机号码)
+	string user_name = 11;
+    string vcode = 12; // 验证码
+    string text_pass = 13; // 明文密码
+}
+
+// 返回方填写
+message RpcResponse {
+    // true;用户ID
+    uint32 user_id = 1;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

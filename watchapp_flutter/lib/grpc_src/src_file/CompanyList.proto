@@ -1,0 +1,46 @@
+syntax = "proto3";
+package CompanyList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6404
+//;Name string = "CompanyList"
+
+message CompanyInfo {
+    string name = 1;
+    string company_code = 2;
+    string addr = 3;
+	// true; 机构代码证
+	string agency_code = 4;
+	// true; 文件ID集合
+	string file_ids = 5;
+	uint32 is_review = 6; // 0, 等待审核；1， 审核通过；2，审核拒绝 
+	string review_mark = 7; // 如果is_review=2 ;该处为拒绝理由
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// 分页信息
+    // true;第几页数据，数据是按照默认排序从 (page-1) * page_size 到 page * page_size 之间的数据
+	uint32 page = 11;
+	// true; 每页多少条数据
+	uint32 page_size = 12;
+
+    // 检索条件
+    string company_code = 21;
+    string name = 22;
+}
+
+// 返回方填写
+message RpcResponse {
+    uint32 total = 11;
+	repeated CompanyInfo companys = 12;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

@@ -1,0 +1,35 @@
+syntax = "proto3";
+import "iot_comm.proto";
+
+package DeviceCmdAdd; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6003
+//;Name string = "DeviceCmdAdd"
+
+message ReportCmd {
+	int32 cmd_src = 1; // 1：app产生命令 2：联动规则触发命令 3: 场景产生 4: 用户手动触发 
+	int64 time_stamp = 3; // 执行的时候事件戳，单位MS
+	SIOTCMD cmd = 2;
+	string msg_id = 4;
+}
+
+// 请求方填写
+message RpcRequest {
+	string device_id = 1;
+	string device_seckey = 2;
+
+	string sub_device_id = 3;
+
+	repeated ReportCmd rep_cmds = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

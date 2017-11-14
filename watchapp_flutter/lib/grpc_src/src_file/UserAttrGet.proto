@@ -1,0 +1,68 @@
+syntax = "proto3";
+package UserAttrGet; // namespace
+
+option objc_class_prefix = "UserAttrGet";
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6714
+//;Name string = "UserAttrGet"
+
+
+message UserAttr {
+	// true; 用户ID
+	uint32 user_id = 1;
+    string user_name = 2;
+    string like_name = 4;
+    string sign = 5;
+    string pic_fileid = 6; // 头像图片
+
+    // 上面信息对陌生人开放
+
+    // true; 生日年份,例如：2004年该值为2004.
+	int32 birth_year = 11;
+	// true;生日月份，例如: 5月该值为5
+	int32 birth_month = 12;
+	// true;生日日期，例如： 20日该值为20
+	int32 birth_day = 13;
+	// true;性别（1,男；2，女；3，中性）
+	int32 sex = 14;
+	// false; 公司代码
+	string company_code = 15;
+
+    // 上面所有信息对好友开放
+
+    int32 height = 21;
+    int32 weight = 22;
+    int32 target_step = 23;
+    string card_id = 24;
+
+	// true; 经度
+	int32 longitude = 31;
+	// true; 纬度
+	int32 latitude = 32;
+	// true; 小区名称或者位置名称
+	string site_name = 33;
+	
+    // 上面所有信息对家人开放，并可以进行设置.
+}
+
+// 请求方填写
+message RpcRequest {
+	// true;平台申请
+	string 	access_token = 1; 
+
+	// true; 用户名集合(如果为空，则表示获取自己的)
+	repeated string user_name = 11;
+}
+
+// 返回方填写
+message RpcResponse {
+    // true; 用户基本信息数组
+	repeated UserAttr attrs = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

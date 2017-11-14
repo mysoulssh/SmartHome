@@ -21,31 +21,36 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
     new Scene('images/icon_outhome_n.png', 'images/icon_outhome_s.png', '离家'),
     new Scene('images/icon_wakeup_n.png', 'images/icon_wakeup_s.png', '起床'),
     new Scene('images/icon_sleep_n.png', 'images/icon_sleep_s.png', '睡觉'),
+    new Scene('images/icon_sleep_n.png', 'images/icon_sleep_s.png', '吃饭'),
   ];
 
+  List<Widget> sceneList = <Widget>[];
+
   SceneType sceneType;
-  bool roomSwitch = false;
+  bool roomSwitch       = false;
   bool livingRoomSwitch = false;
-  bool kitchenSwitch = false;
-  bool studyRoom = false;
+  bool kitchenSwitch    = false;
+  bool studyRoom        = false;
 
-  bool cameraSwitch = false;
-  bool lightSwitch = false;
-  bool decSwitch = false;
-  bool bellSwitch = false;
-  bool tvSwitch = false;
   bool centerControlSwitch = false;
+  bool cameraSwitch        = false;
+  bool lightSwitch         = false;
+  bool decSwitch           = false;
+  bool bellSwitch          = false;
+  bool tvSwitch            = false;
 
-  bool inHomeSelect = true;
+  bool inHomeSelect  = true;
   bool outHomeSelect = false;
-  bool wakeupSelect = false;
-  bool sleepSelect = false;
+  bool wakeupSelect  = false;
+  bool sleepSelect   = false;
+  bool eatingSelect  = false;
 
 
   @override
   void initState(){
     super.initState();
     sceneType = SceneType.SceneRoom;
+
   }
 
   @override
@@ -54,15 +59,16 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
   }
 
   void _resetSelectStatu(){
-    inHomeSelect = false;
+    inHomeSelect  = false;
     outHomeSelect = false;
-    wakeupSelect = false;
-    sleepSelect = false;
+    wakeupSelect  = false;
+    sleepSelect   = false;
+    eatingSelect  = false;
   }
 
   Widget _createSceneBtn(String iconN, String iconS, String text, int tag, bool isSelect){
-    return new Expanded(child: new Container(
-            padding: const EdgeInsets.all(10.0),
+    return new Container(
+            padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
             child: new Column(
               children: <Widget>[
                 new GestureDetector(
@@ -70,16 +76,19 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
                     _resetSelectStatu();
                     switch (tag){
                       case 0:
-                        inHomeSelect = isSelect = true;
+                        inHomeSelect = isSelect  = true;
                         break;
                       case 1:
                         outHomeSelect = isSelect = true;
                         break;
                       case 2:
-                        wakeupSelect = isSelect = true;
+                        wakeupSelect = isSelect  = true;
                         break;
                       case 3:
-                        sleepSelect = isSelect = true;
+                        sleepSelect = isSelect   = true;
+                        break;
+                      case 4:
+                        eatingSelect = isSelect  = true;
                         break;
                     }
                     setState((){
@@ -116,7 +125,6 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
                 ),
               ],
             ),
-          ),
     );
   }
 
@@ -322,20 +330,24 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
               ],
             ),
           ),
-          new Padding(
-            padding: const EdgeInsets.only(top: 1.0),
-            child: new Container(
-              color: Colors.white,
-              child: new Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _createSceneBtn(scene[0].iconN, scene[0].iconS, scene[0].text, 0, inHomeSelect),
-                  _createSceneBtn(scene[1].iconN, scene[1].iconS, scene[1].text, 1, outHomeSelect),
-                  _createSceneBtn(scene[2].iconN, scene[2].iconS, scene[2].text, 2, wakeupSelect),
-                  _createSceneBtn(scene[3].iconN, scene[3].iconS, scene[3].text, 3, sleepSelect),
-                ],
-              ),
-            ),
+          new SizedBox(
+            width: 500.0,
+            height: 100.0,
+            child: new Padding(
+                padding: const EdgeInsets.only(top: 1.0),
+                child: new Container(
+                  color: Colors.white,
+                  child: new ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: <Widget>[
+                      _createSceneBtn(scene[0].iconN, scene[0].iconS, scene[0].text, 0, inHomeSelect),
+                      _createSceneBtn(scene[1].iconN, scene[1].iconS, scene[1].text, 1, outHomeSelect),
+                      _createSceneBtn(scene[2].iconN, scene[2].iconS, scene[2].text, 2, wakeupSelect),
+                      _createSceneBtn(scene[3].iconN, scene[3].iconS, scene[3].text, 3, sleepSelect),
+                      _createSceneBtn(scene[4].iconN, scene[4].iconS, scene[4].text, 4, eatingSelect),
+                    ],
+                  ),
+                )),
           ),
           new Container(
             padding: const EdgeInsets.only(top: 20.0),

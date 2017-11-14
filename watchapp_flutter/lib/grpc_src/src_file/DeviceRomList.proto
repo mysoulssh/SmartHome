@@ -1,0 +1,48 @@
+syntax = "proto3";
+package DeviceRomList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6427
+//;Name string = "DeviceRomList"
+
+message RomInfo {
+	string product_code = 11;
+	uint32 rom_ver = 12;
+	string rom_md5 = 13;
+	string file_id = 14;
+	string change_log=15;
+
+	uint32 is_review = 21;
+	string review_mark = 22;
+	uint32 review_uid = 23;
+	uint32 review_time = 24;
+	uint32 is_last = 25;
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// 分页信息
+    // true;第几页数据，数据是按照默认排序从 (page-1) * page_size 到 page * page_size 之间的数据
+	uint32 page = 11; // def=1
+	// true; 每页多少条数据
+	uint32 page_size = 12; // def=10
+
+    // 检索条件
+    string product_code = 21; // 必须条件
+    uint32 rom_ver = 22; // 可选条件
+}
+
+// 返回方填写
+message RpcResponse {
+    uint32 total = 11;
+	repeated RomInfo roms = 12;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

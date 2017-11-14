@@ -1,0 +1,43 @@
+syntax = "proto3";
+package ProductCmdAdd; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6420
+//;Name string = "ProductCmdAdd"
+
+message CmdInfo {
+	
+    uint32 cmdid = 13;
+    uint32 cmd_type = 14;
+    string arg_v = 15;
+	string arg_type = 16;
+    string arg_detail_en = 17;
+	string arg_detail_cn = 18;
+}
+
+message CmdAns {
+	uint32 cmdid = 11;
+	uint32 code = 12; // 处理后的代码： 0 正确： 其余错误
+	string code_msg = 13; // 错误描述信息
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	string product_code = 11;
+    uint32 rom_ver = 12;
+	repeated CmdInfo cmds = 13;
+}
+
+// 返回方填写
+message RpcResponse {
+	repeated CmdAns ans = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

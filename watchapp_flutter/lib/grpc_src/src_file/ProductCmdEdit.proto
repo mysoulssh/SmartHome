@@ -1,0 +1,35 @@
+syntax = "proto3";
+package ProductCmdEdit; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6421
+//;Name string = "ProductCmdEdit"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// true; 条件
+	string product_code = 11;
+    uint32 rom_ver = 12;
+	
+	// 修改内容
+	uint32 cmdid = 23;
+    uint32 cmd_type = 24;
+    string arg_v = 25;
+	string arg_type = 26;
+    string arg_detail_en = 27;
+	string arg_detail_cn = 28;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

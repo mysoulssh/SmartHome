@@ -1,0 +1,28 @@
+syntax = "proto3";
+package UserFRSAdd; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6720
+//;Name string = "UserFRSAdd"
+
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// true; 被建立关系的用户ID
+	string relation_user_name = 11;
+	// true; 关系描述,通过相关字典接口`DictRelationGet`获得关系描述列表.
+	uint32 relation_code = 12;
+}
+
+// 返回方填写
+message RpcResponse {
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}
