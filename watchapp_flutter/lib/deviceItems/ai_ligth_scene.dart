@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:watchapp_flutter/grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+
+typedef ChangeColorsCallback(int r, int g, int b);
 
 class AiLightScene extends StatefulWidget{
 
-  AiLightScene({this.isSwitchOn});
+  AiLightScene({
+    this.isSwitchOn,
+    this.deviceId,
+    this.subDeviceId,
+    this.changeColorsCallback
+  });
 
   bool isSwitchOn;
+  ChangeColorsCallback changeColorsCallback;
+
+  String deviceId;
+  String subDeviceId;
 
   @override
   _AiLightSceneState createState() => new _AiLightSceneState();
 }
 
 class _AiLightSceneState extends State<AiLightScene>{
+
+  int r = 0;
+  int g = 0;
+  int b = 0;
 
   List<String> imagesList = <String>[
     'images/btn_yellow.png',
@@ -53,29 +71,88 @@ class _AiLightSceneState extends State<AiLightScene>{
         child: new FlatButton(
             onPressed: (){
               print('$index and $imageName');
+
+
+
               switch (index){
                 case 0:
                   lightColor = new Color.fromRGBO(243, 223, 174, 1.0);
+                  r = 243;
+                  g = 223;
+                  b = 174;
+                  if (widget.changeColorsCallback != null){
+                    widget.changeColorsCallback(243,223,174);
+                  }
                   break;
                 case 1:
                   lightColor = new Color.fromRGBO(84, 175, 237, 1.0);
+                  r = 84;
+                  g = 175;
+                  b = 237;
+                  if (widget.changeColorsCallback != null){
+                    widget.changeColorsCallback(84,175,237);
+                  }
                   break;
                 case 2:
                   lightColor = new Color.fromRGBO(89, 220, 125, 1.0);
+                  r = 89;
+                  g = 220;
+                  b = 125;
+                  if (widget.changeColorsCallback != null){
+                    widget.changeColorsCallback(89,220,125);
+                  }
                   break;
                 case 3:
                   lightColor = new Color.fromRGBO(223, 108, 229, 1.0);
+                  r = 223;
+                  g = 108;
+                  b = 229;
+                  if (widget.changeColorsCallback != null){
+                    widget.changeColorsCallback(233,108,229);
+                  }
                   break;
                 case 4:
 
                   break;
               }
+
+              if (widget.changeColorsCallback == null){
+                runIOTcmd(r, g, b);
+              }
+
               setState((){});
             },
             child: new Image(image: new AssetImage(imageName))
         ),
       ),
     ));
+  }
+
+  void runIOTcmd(int r, int g, int b){
+    IOTCMD iotcmd = new IOTCMD();
+
+    SIOTCMD cmd1 = new SIOTCMD()                //控制灯光开关
+    ..subDeviceId   = widget.subDeviceId
+    ..deviceId      = widget.deviceId
+    ..cmdid         = 201
+      ..argInt32.add(widget.isSwitchOn?1:0);
+
+    SIOTCMD cmd2 = new SIOTCMD()                //控制灯光颜色
+    ..subDeviceId   = widget.subDeviceId
+    ..deviceId      = widget.deviceId
+    ..cmdid         = 202
+      ..argInt32.add(r)
+      ..argInt32.add(g)
+      ..argInt32.add(b);
+
+    iotcmd.cmd.add(cmd1);
+    iotcmd.cmd.add(cmd2);
+
+    httpManage.deviceRunTOTCmd(UserAccessModel.accessModel.accessToken, iotcmd, (Map map){
+
+    }, (String errorMsg){
+      print('灯光错误信息：$errorMsg');
+    });
   }
 
 
@@ -210,6 +287,7 @@ class _AiLightSceneState extends State<AiLightScene>{
                 height: 130.0,
                 child: new FlatButton(onPressed: (){
                   setState((){
+                    runIOTcmd(r, g, b);
                     widget.isSwitchOn = !widget.isSwitchOn;
                   });
                 }, child: new Image(image: new AssetImage(widget.isSwitchOn?'images/btn_switch_s.png':'images/btn_switch_n.png'))),

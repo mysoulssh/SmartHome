@@ -3,6 +3,7 @@ package EventRuleList; // namespace
 
 import "iot_comm.proto";
 
+
 // 每个proto必须包含下面行，相关的id和name统一进行分配即可.
 //;Id uint64 = 6309
 //;Name string = "EventRuleList"

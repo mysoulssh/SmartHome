@@ -11,6 +11,10 @@ import 'deviceItems/ai_action.dart';
 import 'deviceItems/ai_add_rule.dart';
 import 'Tools/right_btn.dart';
 import 'Tools/scan_qr_code.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'meItems/models/house_info_model.dart';
+import 'grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
 
 enum AddSceneBtnType{
   AddDevice,   //添加设备
@@ -19,6 +23,10 @@ enum AddSceneBtnType{
 }
 
 class WatchApp extends StatefulWidget{
+  WatchApp({this.houseGuid});
+
+  String houseGuid;
+
   @override
   _WatchAppState createState() => new _WatchAppState();
 }
@@ -35,14 +43,16 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
   //主视图
   Widget view;
 
-  Widget homeView;
+  List<PopupMenuItem<List<String>>> popList = <PopupMenuItem<List<String>>>[];
+
+  HomeItem homeView;
   Widget sportView;
   Widget locationView;
   Widget meView;
-  Widget deviceView;
+  DeviceItem deviceView;
 
   //家庭名称
-  String familyName = '我的家庭1';
+  String familyName = '';
 /*
    * 在对象插入到树中时调用
    *  框架将为它创建的每个State（状态）对象调用此方法一次
@@ -54,10 +64,8 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
     // 调用父类的内容
     super.initState();
 
-    familyName = '我的家庭1';
-
     title = '智能联动';
-    view = homeView = new HomeItem();
+    view = homeView = new HomeItem(currentHouseGuid: widget.houseGuid,);
 
     sportView = new SportItem();
     locationView = new LocationItem();
@@ -111,7 +119,27 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
       view.controller.addListener(_rebuild);
     // 底部导航栏当前选择的动画控制器的值为1.0
     _navigationViews[_currentIndex].controller.value = 1.0;
+
+    loadFamilys();
   }
+
+  void loadFamilys(){
+    httpManage.houseList(UserAccessModel.accessModel.accessToken, '', (Map map){
+      List<HouseInfoModel> houseModels = map['houses'];
+      popList.removeRange(0, popList.length);
+      for (var tmp in houseModels){
+        popList.add(new PopupMenuItem(child: new Text(tmp.houseName,),value: <String>[tmp.houseName,tmp.houseGuid],));
+      }
+      familyName = houseModels[0].houseName;
+      var houseGuid = houseModels[0].houseGuid;
+      deviceView.currentHouseGuid = houseGuid;
+      homeView.currentHouseGuid = houseGuid;
+      setState((){});
+    }, (String errorMsg){
+
+    });
+  }
+
 
   // 释放此对象使用的资源
   @override
@@ -187,23 +215,20 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
         title: new Text(title,style: new TextStyle(color: Colors.black),),
         centerTitle: true,
         backgroundColor: new Color.fromRGBO(250, 251, 253, 1.00),
-        leading: title == ''?new PopupMenuButton<String>(
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            new PopupMenuItem(child: new Text('我的家庭1'),value: '我的家庭1',),
-            new PopupMenuItem(child: new Text('我的家庭2'),value: '我的家庭2',),
-            new PopupMenuItem(child: new Text('我的家庭3'),value: '我的家庭3',),
-            new PopupMenuItem(child: new Text('我的家庭4'),value: '我的家庭4',),
-          ],
-          onSelected: (String value){
-            setState((){
-              familyName = value;
-            });
+        leading: title == ''?new PopupMenuButton<List<String>>(
+          itemBuilder: (BuildContext context) => popList,
+          onSelected: (List<String> value){
+            familyName = value[0];
+            view = deviceView = new DeviceItem(currentHouseGuid: value[1],);
+            homeView.currentHouseGuid = value[1];
+
+            setState((){});
           },
           child: new Container(
             child: new Row(
               children: <Widget>[
                 new Container(
-                  child: new Text(familyName,style: new TextStyle(fontSize: 12.0,color: Colors.black),),
+                  child: new Text(familyName, textAlign: TextAlign.center,style: new TextStyle(fontSize: 12.0,color: Colors.black),),
                 )
               ],
             ),
@@ -227,13 +252,46 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
             onSelected: (AddSceneBtnType type){
               print('$type');
               if (type == AddSceneBtnType.AddScene){
-                DeviceAddScene addScene = new DeviceAddScene(false);
+                DeviceAddScene addScene = new DeviceAddScene(false,);
                 Navigator.of(context).push(new MaterialPageRoute(
                     builder: (BuildContext context) => new NavigationBar(addScene, '添加场景',
                       actions: <Widget>[
                         //添加场景界面保存按钮
                         new RightBtnItem('保存', (){
                           print('保存');
+                          if (addScene.isEditScene){
+                            httpManage.sceneEdit(
+                                UserAccessModel.accessModel.accessToken,
+                                addScene.sceneInfoModel.sceneName,
+                                addScene.sceneInfoModel.sceneId,
+                                addScene.sceneInfoModel.cmd,
+                            (Map map){
+                               print('编辑场景成功');
+                            }, (String errorMsg){
+
+                            });
+                          }else{
+                            if(addScene.cmd.length > 0){
+                              IOTCMD iotCmd = new IOTCMD();
+                              for (var v in addScene.cmd){
+                                iotCmd.cmd.add(v);
+                              }
+                              //添加场景
+                              httpManage.sceneAdd(
+                                  UserAccessModel.accessModel.accessToken,
+                                  deviceView.currentHouseGuid,
+                                  addScene.sceneState.editController.text,
+                                  addScene.sceneId,
+                                  iotCmd,
+                                      (Map map){
+                                    print('添加场景成功');
+                                    Navigator.of(context).pop();
+                                  },
+                                      (String errorMsg){
+                                    print('添加场景错误信息：$errorMsg');
+                                  });
+                            }
+                          }
                         })
                       ],
                     )
@@ -286,6 +344,48 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
                   actions: <Widget>[
                     new RightBtnItem('保存', (){
                       print('添加规则保存');
+
+                      RuleInfo ruleInfo = addRule.ruleInfo
+                          ..deviceId = ''
+                          ..houseGuid = deviceView.currentHouseGuid
+                          ..enable = 1;
+
+                      bool onlyTime = true;
+
+                      for (var i=1; i<=ruleInfo.exprs.length; i++){
+                        var v = ruleInfo.exprs[i-1];
+                        v.exprId = i;
+
+                        if (v.subDeviceId != null || v.subDeviceId != ''){
+                          onlyTime = false;
+                        }
+                      }
+                      var tmpv = ruleInfo.exprs;
+                      print('$tmpv');
+
+                      onlyTime?ruleInfo.onlyTime = 1:ruleInfo.onlyTime = 2;
+
+                      httpManage.eventRuleAdd(
+                          ruleInfo.deviceId,
+                          UserAccessModel.accessModel.accessToken,
+                          ruleInfo.houseGuid,
+                          ruleInfo.etName,
+                          ruleInfo.prio,
+                          ruleInfo.enable,
+                          ruleInfo.onlyTime,
+                          ruleInfo.lhs,
+                          ruleInfo.isEnd,
+                          ruleInfo.exprs,
+                          ruleInfo.rhs,
+                          (Map map){
+                            String etId = map['etId'];
+                            print('etId = $etId');
+                            setState((){});
+                          },
+                          (String errorMsg){
+                            print('error: $errorMsg');
+                          });
+
                       Navigator.of(context).pop();
                     })
                   ],))

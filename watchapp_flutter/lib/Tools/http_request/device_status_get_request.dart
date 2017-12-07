@@ -3,6 +3,7 @@ import 'package:grpc/grpc.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/DeviceStatusGet/DeviceStatusGet.pb.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/DeviceStatusGet/DeviceStatusGet.pbgrpc.dart';
+import 'package:watchapp_flutter/deviceItems/models/status_info_model.dart';
 
 
 typedef DeviceStatusGetFailureCallback(String msg);
@@ -25,7 +26,7 @@ class DeviceStatusGetRequest {
   }
 
   //获取个人信息
-  Future<RpcResponse> deviceStatusGet(String accessToken, List<QueryInfo> query, DeviceStatusGetFailureCallback failureCallback) async{
+  Future<List<StatusInfoModel>> deviceStatusGet(String accessToken, List<QueryInfo> query, DeviceStatusGetFailureCallback failureCallback) async{
     final rpcRequest = new RpcRequest()
       ..accessToken = accessToken
       ;
@@ -34,10 +35,25 @@ class DeviceStatusGetRequest {
       rpcRequest.devs.add(v);
     }
 
-    RpcResponse response;
+    List<StatusInfoModel> models = <StatusInfoModel>[];
 
     try{
-      response = await shareRpcYCall().yCall(rpcRequest);
+      RpcResponse response = await shareRpcYCall().yCall(rpcRequest);
+
+      if (response.status.length > 0){
+        for (var v in response.status){
+          StatusInfoModel infoModel = new StatusInfoModel()
+              ..deviceId    = v.deviceId
+              ..subDeviceId = v.subDeviceId
+              ..argBytes    = v.argBytes
+              ..argInt32    = v.argInt32
+              ..argString   = v.argString
+              ..online      = v.online
+              ..cmdid       = v.cmdid
+              ..timeStamp   = v.timeStamp;
+          models.add(infoModel);
+        }
+      }
 
     }catch(e){
       String error = e.message;
@@ -48,6 +64,6 @@ class DeviceStatusGetRequest {
       }
     }
 
-    return response;
+    return models;
   }
 }

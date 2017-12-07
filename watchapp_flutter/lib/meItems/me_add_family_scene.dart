@@ -3,12 +3,19 @@ import 'package:watchapp_flutter/Tools/action_btn.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
 import 'me_add_family_room_scene.dart';
 import 'package:watchapp_flutter/Tools/right_btn.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+import 'models/house_info_model.dart';
+import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
 
 typedef AddFamilySceneCallback();
 
 class MeAddFamilyScene extends StatefulWidget{
+
+  _MeAddFamilySceneState familySceneState = new _MeAddFamilySceneState();
   @override
-  _MeAddFamilySceneState createState() => new _MeAddFamilySceneState();
+  _MeAddFamilySceneState createState() => familySceneState;
 }
 
 class _MeAddFamilySceneState extends State<MeAddFamilyScene>{
@@ -35,6 +42,9 @@ class _MeAddFamilySceneState extends State<MeAddFamilyScene>{
           builder: (BuildContext context) => new NavigationBar(addFamilyRoomScene, '添加房间',
             actions: <Widget>[
               new RightBtnItem('保存', (){
+                roomsName.add(addFamilyRoomScene.roomSceneState.roomController.text);
+                grids.insert(grids.length-1, createItems(roomsName.last, imagesName.last, null));
+                setState((){});
                 Navigator.of(context).pop();
               })
             ],
@@ -115,6 +125,12 @@ class _MeAddFamilySceneState extends State<MeAddFamilyScene>{
                     padding: const EdgeInsets.only(right: 8.0),
                     child: new TextField(
                       controller: roomController,
+                      onChanged: (String value){
+                        if (value.length > 4){
+                          ShowInfo.showInfo(context, content: '家庭名称最多4个字');
+                          roomController.text = '';
+                        }
+                      },
                       textAlign: TextAlign.right,
                       decoration: new InputDecoration.collapsed(hintText: '请输入房间名'),
                     ),
@@ -134,16 +150,44 @@ class _MeAddFamilySceneState extends State<MeAddFamilyScene>{
               ],
             ),
           ),
-          new Expanded(child: new GridView.count(
-            primary: false,
-            padding: const EdgeInsets.all(10.0),
-            mainAxisSpacing: 10.0,
-            crossAxisSpacing: 10.0,
-            crossAxisCount: 3,
-            children: grids,
-          ),flex: 2,),
+          new Expanded(child: new GridView.builder(
+              primary: false,
+              padding: const EdgeInsets.all(10.0),
+              gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 10.0,
+                crossAxisSpacing: 10.0,
+              ),
+              itemBuilder: (BuildContext context, int index) => grids[index],
+              itemCount: grids.length,
+          ),flex: 3,),
           new Expanded(child: new Padding(padding: const EdgeInsets.only(top: 20.0),child: new ActionBtn(text: '创建家庭',callback: (){
-            Navigator.of(context).pop();
+            if(roomController.text == null || roomController.text == ''){
+              ShowInfo.showInfo(context,content: '房间名称不能为空');
+            }else{
+              httpManage.houseAdd(UserAccessModel.accessModel.accessToken, roomController.text, (Map map){
+                var houseGuid = map['houseGuid'];
+                for (var i = 0; i < grids.length - 1; ++i) {
+                  var o = grids[i];
+                  httpManage.houseAreaAdd(UserAccessModel.accessModel.accessToken, houseGuid, roomsName[i], (Map map){
+                    var areaGuid = map['areaGuid'];
+                    print('$i = $areaGuid');
+                  }, (String errorMsg){
+                    print('houseAreaAdd = $errorMsg');
+                  });
+                }
+                HouseInfoModel infoModel = new HouseInfoModel();
+                infoModel.houseGuid = houseGuid;
+                infoModel.houseName = roomController.text;
+                infoModel.addrName = roomController.text;
+                infoModel.isConfirm = 1;
+                infoModel.role = 1;
+                infoModel.userId = UserAccessModel.accessModel.userId;
+                Navigator.of(context).pop({'houseInfoModel':infoModel});
+              }, (String errorMsg){
+                print('houseAdd = $errorMsg');
+              });
+            }
           },),))
         ],
       ),

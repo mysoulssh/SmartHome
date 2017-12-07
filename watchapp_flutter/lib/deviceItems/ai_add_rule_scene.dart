@@ -19,7 +19,7 @@ class _AiAddRuleSceneState extends State<AiAddRuleScene>{
     super.initState();
     int i = 0;
     for (String tmp in sceneList){
-      cell.add(new AiActionCell(tmp, switchList[i], index: i, callback: (int index,bool isTurnOn){
+      cell.add(new AiActionCell(tmp, switchList[i], index: i, switchClickCallback: (int index,bool isTurnOn){
         for (int j=0;j<cell.length;j++){
           AiActionCell tmpCell = cell[j];
           tmpCell.isTurnOn = false;

@@ -8,6 +8,7 @@ import 'package:watchapp_flutter/grpc_src/dart_out/UserAttrSet/UserAttrSet.pb.da
 import 'package:watchapp_flutter/Tools/http_manage.dart';
 import 'package:watchapp_flutter/Tools/user_access_model.dart';
 import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+import 'package:watchapp_flutter/meItems/models/user_info_model.dart';
 
 typedef CellSelectCallback(int index);
 
@@ -37,7 +38,20 @@ class _MeInfoSceneState extends State<MeInfoScene>{
     super.initState();
 
     initList();
+
+    userInfoGet();
   }
+
+  void userInfoGet(){
+    httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, UserAccessModel.accessModel.userName, (Map map){
+      UserInfoModel infoModel = map['UserInfoModel'];
+      print('$infoModel');
+    }, (String errorMsg){
+      print('个人详情错误信息：$errorMsg');
+    });
+  }
+
+
   //设置信息
   void setInfo(int item_id, {String valueString, int valueInt}){
     var tmp = new Attr()

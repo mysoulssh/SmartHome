@@ -1,0 +1,45 @@
+syntax = "proto3";
+package HouseDeviceList; // namespace
+
+// 每个proto必须包含下面行，相关的id和name统一进行分配即可.
+//;Id uint64 = 6218
+//;Name string = "HouseDeviceList"
+
+message DeviceInfo {
+    string device_id = 1;
+    string device_name = 2;
+	string sub_device_id = 3;
+
+    string house_guid = 4;
+	string area_guid = 5;
+    repeated string prodt_type = 6; // [当sub_device_id 为空时才设置该值]设备类别
+}
+
+// 请求方填写
+message RpcRequest {
+	// true; access_token
+	string access_token = 1;
+
+	// 分页信息
+	// page == 0 / page_size == 0 表示获取所有记录
+    // true;第几页数据，数据是按照默认排序从 (page-1) * page_size 到 page * page_size 之间的数据
+	uint32 page = 11; // def=1
+	// true; 每页多少条数据
+	uint32 page_size = 12; // def=10
+
+    // 检索条件
+    string house_guid = 13; // 必须
+    string area_guid = 14; // 可选
+    string prodt_type = 15; // 可选
+}
+
+// 返回方填写
+message RpcResponse {
+	repeated DeviceInfo devs = 11;
+}
+
+// Service
+service RpcYCall {
+	//rpc Add (stream RpcRequest) returns (stream RpcResponse) {}
+	rpc YCall (RpcRequest) returns (RpcResponse) {}
+}

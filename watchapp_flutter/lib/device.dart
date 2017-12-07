@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'deviceItems/device_scene.dart';
 import 'deviceItems/device_add_scene.dart';
 import 'main_navbar.dart';
-import 'Tools/scan_qr_code.dart';
 import 'Tools/right_btn.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'meItems/models/area_info_model.dart';
+import 'deviceItems/device_area_scene.dart';
+import 'deviceItems/device_class_scene.dart';
+import 'deviceItems/models/house_device_info_model.dart';
+import 'deviceItems/models/scene_info_model.dart';
+import 'grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
 
 enum SceneType{
   SceneRoom,    //房间
@@ -11,21 +18,25 @@ enum SceneType{
 }
 
 class DeviceItem extends StatefulWidget{
+
+  DeviceItem({this.currentHouseGuid});      //问题，待解决
+
+  String currentHouseGuid;
+
   @override
   _DeviceItemState createState() => new _DeviceItemState();
 }
 
 class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateMixin{
   List<Scene> scene = <Scene>[
-    new Scene('images/icon_home2_n.png', 'images/icon_home2_s.png', '回家'),
-    new Scene('images/icon_outhome_n.png', 'images/icon_outhome_s.png', '离家'),
-    new Scene('images/icon_wakeup_n.png', 'images/icon_wakeup_s.png', '起床'),
-    new Scene('images/icon_sleep_n.png', 'images/icon_sleep_s.png', '睡觉'),
-    new Scene('images/icon_sleep_n.png', 'images/icon_sleep_s.png', '吃饭'),
+    new Scene('images/icon_home2_n.png', 'images/icon_home2_s.png', '回家','0a0a79f667629ea6cecd8dc225ffefb0',0),
+    new Scene('images/icon_outhome_n.png', 'images/icon_outhome_s.png', '离家','b2f2363f56da29b458ce80e64db856c0',0),
+    new Scene('images/icon_wakeup_n.png', 'images/icon_wakeup_s.png', '起床','abff0f9c08f344ec9a77d992829b7922',0),
+    new Scene('images/icon_sleep_n.png', 'images/icon_sleep_s.png', '睡觉','94013c4ed339c072d869dddc2577105d',0),
   ];
 
   List<Widget> sceneList = <Widget>[];
-
+  
   SceneType sceneType;
   bool roomSwitch       = false;
   bool livingRoomSwitch = false;
@@ -39,18 +50,29 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
   bool bellSwitch          = false;
   bool tvSwitch            = false;
 
-  bool inHomeSelect  = true;
-  bool outHomeSelect = false;
-  bool wakeupSelect  = false;
-  bool sleepSelect   = false;
-  bool eatingSelect  = false;
+  List<Widget> gridsRoom = <Widget>[];
+  List<Widget> gridsClass = <Widget>[];
 
+  List<HouseDeviceInfoModel> cameraList         = <HouseDeviceInfoModel>[];
+  List<HouseDeviceInfoModel> lightList          = <HouseDeviceInfoModel>[];
+  List<HouseDeviceInfoModel> dectectorList      = <HouseDeviceInfoModel>[];
+  List<HouseDeviceInfoModel> bellList           = <HouseDeviceInfoModel>[];
+  List<HouseDeviceInfoModel> tvList             = <HouseDeviceInfoModel>[];
+  List<HouseDeviceInfoModel> centerControlList  = <HouseDeviceInfoModel>[];
 
   @override
   void initState(){
     super.initState();
     sceneType = SceneType.SceneRoom;
 
+    for (var i=0;i < scene.length; i++){
+      Scene tmp = scene[i];
+      sceneList.add(_createSceneBtn(tmp,null));
+    }
+
+    loadScene(widget.currentHouseGuid);
+    loadRoom(widget.currentHouseGuid);
+    loadDeviceList(widget.currentHouseGuid);
   }
 
   @override
@@ -58,15 +80,156 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  void _resetSelectStatu(){
-    inHomeSelect  = false;
-    outHomeSelect = false;
-    wakeupSelect  = false;
-    sleepSelect   = false;
-    eatingSelect  = false;
+  void reload(){
+    setState((){});
   }
 
-  Widget _createSceneBtn(String iconN, String iconS, String text, int tag, bool isSelect){
+  void loadScene(String houseGuid){
+    widget.currentHouseGuid = houseGuid;
+    httpManage.sceneList(UserAccessModel.accessModel.accessToken, houseGuid, 1, 10, (Map map){
+      print('$map');
+
+      sceneList.removeRange(0, sceneList.length);
+
+      List<SceneInfoModel> sceneModels = map['models'];
+      for (var v in sceneModels){
+        scene.add(new Scene('images/testIcon.jpg','images/icon_home2_s.png',v.sceneName,v.sceneId,v.enable));
+      }
+
+      for (var v = 0; v< scene.length; v++){
+        Scene sceneInfo = scene[v];
+        SceneInfoModel sceneInfoModel = new SceneInfoModel()
+        ..sceneName = sceneInfo.text
+        ..sceneId   = sceneInfo.sceneId
+        ..sceneType = 1
+        ..cmd       = new IOTCMD();
+        if (v > 3){
+          sceneInfoModel = sceneModels[v-4];
+        }
+        sceneList.add(_createSceneBtn(sceneInfo, sceneInfoModel));
+      }
+
+      setState((){});
+    }, (String errorMsg){
+
+    });
+  }
+
+  void loadRoom(String houseGuid){
+    httpManage.houseAreaList(UserAccessModel.accessModel.accessToken, houseGuid, (Map map){
+      print('loadRoom = $map');
+      gridsRoom.removeRange(0, gridsRoom.length);
+      List<AreaInfoModel> models = map['areas'];
+      for (var v in models){
+        gridsRoom.add(_switchRoom('images/icon_bedroom.png',v.areaName,false,'6/6',false,v.areaGuid));
+      }
+      reload();
+    }, (String errorMsg){
+
+    });
+  }
+
+  void loadDeviceList(String houseGuid){
+    httpManage.houseDeviceList(UserAccessModel.accessModel.accessToken, houseGuid, 1, 20, (Map map){
+      List<HouseDeviceInfoModel> infoModels = map['models'];
+      print('$infoModels');
+
+      for (var v in infoModels){
+        switch (v.prodtType.first){
+          case 'YHUB':      //中控
+          centerControlList.add(v);
+            break;
+          case 'CHDL':      //门锁
+
+            break;
+          case 'CHSW':      //开关
+
+            break;
+          case 'CHLL':      //rgb灯
+            lightList.add(v);
+            break;
+          case 'SHHI':      //体感
+
+            break;
+          case 'SHLI':      //光照度
+
+            break;
+          case 'SHMC':      //门磁
+
+            break;
+          case 'BHDB':      //门铃
+            bellList.add(v);
+            break;
+          case 'BSOS':      //SOS
+
+            break;
+          case 'CIRC':      //红外遥控
+
+            break;
+          case 'CAIR':      //空调
+
+            break;
+          case 'CHCL':      //窗帘
+
+            break;
+          case 'SHYG':      //烟感
+
+            break;
+          case 'SHWG':case 'SHSG':      //温度传感器  湿度传感器
+            dectectorList.add(v);
+            break;
+          case 'CHCZ':      //插座
+
+            break;
+          case 'YSBS':      //边界服务器
+
+            break;
+          case 'BHSC':      //情景按钮
+
+            break;
+          case 'BHCC':      //窗帘按钮
+
+            break;
+          case 'BHSW':      //开关按钮
+
+            break;
+          case 'YSWO':      //智能手表
+
+            break;
+        }
+      }
+
+      String cameraNum  = cameraList.length.toString();
+      String lightNum   = lightList.length.toString();
+      String decNum     = dectectorList.length.toString();
+      String bellNum    = bellList.length.toString();
+      String tvNum      = tvList.length.toString();
+      String centerNum  = centerControlList.length.toString();
+
+      gridsClass.add(_switchRoom('images/icon_canmera.png', '摄像头', cameraSwitch, '$cameraNum/$cameraNum', true, ''));
+      gridsClass.add(_switchRoom('images/icon_light.png','灯',lightSwitch, '$lightNum/$lightNum',true,''));
+      gridsClass.add(_switchRoom('images/icon_inductor.png','感应器',decSwitch,'$decNum/$decNum',true,''));
+      gridsClass.add(_switchRoom('images/icon_doorbell.png', '门铃', bellSwitch, '$bellNum/$bellNum',true,''));
+      gridsClass.add(_switchRoom('images/icon_livingroom.png', '电视', tvSwitch, '$tvNum/$tvNum',false,''));
+      gridsClass.add(_switchRoom('images/icon_centercontrol.png', '中控', centerControlSwitch, '$centerNum/$centerNum',true,''));
+
+      setState((){});
+
+    }, (String errorMsg){
+
+    });
+  }
+
+
+  void _resetSelectStatu(){
+
+    for (var v in scene){
+      v.enable = 0;
+    }
+
+  }
+
+  Widget _createSceneBtn(Scene sceneInfo, SceneInfoModel sceneInfoModel){
     return new Container(
             padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
             child: new Column(
@@ -74,53 +237,54 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
                 new GestureDetector(
                   onTap: (){
                     _resetSelectStatu();
-                    switch (tag){
-                      case 0:
-                        inHomeSelect = isSelect  = true;
-                        break;
-                      case 1:
-                        outHomeSelect = isSelect = true;
-                        break;
-                      case 2:
-                        wakeupSelect = isSelect  = true;
-                        break;
-                      case 3:
-                        sleepSelect = isSelect   = true;
-                        break;
-                      case 4:
-                        eatingSelect = isSelect  = true;
-                        break;
+                    sceneInfo.enable = 1;
+                    sceneList.removeRange(0, sceneList.length);
+                    for (var v in scene){
+                      sceneList.add(_createSceneBtn(v, sceneInfoModel));
                     }
-                    setState((){
+
+                    httpManage.sceneActive(UserAccessModel.accessModel.accessToken, widget.currentHouseGuid, sceneInfo.sceneId, (Map map){
+                      reload();
+                    }, (String errorMsg){
 
                     });
+
                   },
                   child: new SizedBox(
                     width: 50.0,
                     height: 50.0,
-                    child: new Image(image: new AssetImage(isSelect?iconS:iconN)),
+                    child: new Image(image: new AssetImage(sceneInfo.enable==1?sceneInfo.iconS:sceneInfo.iconN)),
                   ),
                 ),
                 new Padding(
                   padding: const EdgeInsets.only(top: 5.0),
                   child: new GestureDetector(
                     onTap: (){
-                      print('$text');
-                      DeviceAddScene editScene = new DeviceAddScene(true,sceneTitle: text,);
+                      DeviceAddScene editScene = new DeviceAddScene(true,sceneInfoModel: sceneInfoModel,);
                       Navigator.of(context).push(new MaterialPageRoute(
                           builder: (BuildContext context){
                             return new NavigationBar(editScene, '编辑场景',
                               actions: <Widget>[
                                 new RightBtnItem('保存', (){
                                   print('保存');
-                                  print(editScene.sceneTitle);
+                                  httpManage.sceneEdit(
+                                      UserAccessModel.accessModel.accessToken,
+                                      editScene.sceneInfoModel.sceneName,
+                                      editScene.sceneInfoModel.sceneId,
+                                      editScene.sceneInfoModel.cmd,
+                                          (Map map){
+                                        print('编辑场景成功');
+                                        Navigator.of(context).pop();
+                                      }, (String errorMsg){
+
+                                  });
                                 })
                               ],
                             );
                           })
                       );
                     },
-                    child: new Text(text),
+                    child: new Text(sceneInfo.text),
                   ),
                 ),
               ],
@@ -128,34 +292,64 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
     );
   }
 
-  Widget _switchRoom(String typeImage,String typeText,bool isSwitchOn,String numText,bool isNewImage){
+  Widget _switchRoom(String typeImage,String typeText,bool isSwitchOn,String numText,bool isNewImage,String areaGuid){
     return new GestureDetector(
       onTap: (){
         print('$typeText');
-        Widget deviceScene = new DeviceScene(typeText);
-        Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
-          return new NavigationBar(deviceScene, typeText,
-            actions: <Widget>[
-              new RightBtnItem('添加', (){
-                print('添加');
-                setState((){
-                  ScanQRCode.showQRCodeReader((String value){
-                    showDialog(context: context, child: new AlertDialog(
-                      title: new Text('扫描结果', textAlign: TextAlign.center),
-                      content: new Text(value, textAlign: TextAlign.center),
-                      actions: <Widget>[
-                        new FlatButton(onPressed: (){
-                          Navigator.of(context).pop();
-                        }, child: new Text('确定'))
-                      ],
-                    ));
-                  });
-                });
-              })
-            ],
-          );
+        if (areaGuid == ''){
+
+          DeviceClassScene classScene;
+
+          if (typeText == '摄像头'){
+            classScene = new DeviceClassScene(cameraList,false);
+          }else if (typeText == '灯'){
+            classScene = new DeviceClassScene(lightList,false);
+          }else if (typeText == '感应器'){
+            classScene = new DeviceClassScene(dectectorList,false);
+          }else if (typeText == '门铃'){
+            classScene = new DeviceClassScene(bellList,false);
+          }else if (typeText == '电视'){
+            classScene = new DeviceClassScene(tvList,false);
+          }else if (typeText == '中控'){
+            classScene = new DeviceClassScene(centerControlList,true);
           }
-        ));
+
+          Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
+            return new NavigationBar(classScene, typeText,
+//              actions: <Widget>[
+//                new RightBtnItem('添加', (){
+//                  print('添加');
+//                  DeviceScene deviceScene = new DeviceScene('添加设备',EnterType.typeDevice,callback: (String id, String subId){
+//                    print('id = $id     subid = $subId');
+//                  },);
+//
+//                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context){
+//                    return new NavigationBar(deviceScene, '添加设备');
+//                  }));
+//                })
+//              ],
+            );
+          }));
+        }else{
+          //家庭二id 7d8b0bc7-177a-430c-a797-7c0b9dd5c970
+          //我的家id 376f8854-d2f2-45e9-b696-e5b8db4c3a80
+          DeviceAreaScene deviceAreaScene = new DeviceAreaScene(typeText, widget.currentHouseGuid, areaGuid);
+          Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
+            return new NavigationBar(deviceAreaScene, typeText,
+              actions: <Widget>[
+                new RightBtnItem('添加', (){
+                  print('添加');
+                  DeviceScene deviceScene = new DeviceScene('添加设备',EnterType.typeDevice,callback: (String id, String subId){
+                    deviceAreaScene.sceneState.addAreaDevice(id, subId);
+                  },);
+                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context){
+                    return new NavigationBar(deviceScene, '添加设备');
+                  }));
+                })
+              ],
+            );
+          }));
+        }
       },
       child: new Container(
         color: Colors.white,
@@ -188,15 +382,7 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
             new GestureDetector(
               onTap: (){
                 setState((){
-                  if (typeText == '卧室'){
-                    roomSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '客厅'){
-                    livingRoomSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '厨房'){
-                    kitchenSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '书房'){
-                    studyRoom = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '摄像头'){
+                  if (typeText == '摄像头'){
                     cameraSwitch = isSwitchOn = !isSwitchOn;
                   }else if (typeText == '灯'){
                     lightSwitch = isSwitchOn = !isSwitchOn;
@@ -249,33 +435,31 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
   }
 
   Widget _createSceneRoom(){
-    return new Expanded(child: new Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: <Widget>[
-        new Expanded(child: new Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(0.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_bedroom.png','卧室',roomSwitch,'6/6',false),
-            )),
-            new Expanded(child: new Padding(padding: const EdgeInsets.all(1.0),
-              child: _switchRoom('images/icon_livingroom.png','客厅',livingRoomSwitch,'2/3',false),
-            )),
-          ],
-        )),
-        new Expanded(child: new Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(0.0,0.0,0.0,1.0),
-              child: _switchRoom('images/icon_kitchen.png', '厨房', kitchenSwitch, '6/6',false),
-            )),
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 0.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_study.png', '书房', studyRoom, '6/6',false),
-            )),
-          ],
-        ))
-      ],
-    ),);
+    return new Expanded(child: new Container(
+      child: new GridView.builder(
+        primary: false,
+        gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 1.0,
+          crossAxisSpacing: 1.0,
+        ),
+        itemBuilder: (BuildContext context, int index) => gridsRoom[index],
+        itemCount: gridsRoom.length,),
+    ));
+  }
+
+  Widget _createSceneClass1(){
+    return new Expanded(child: new Container(
+      child: new GridView.builder(
+        gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 1.0,
+          crossAxisSpacing: 1.0,
+        ),
+        itemBuilder: (BuildContext context, int index) => gridsClass[index],
+        itemCount: gridsClass.length,
+      ),
+    ));
   }
 
   Widget _createSceneClass(){
@@ -286,13 +470,13 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(0.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_canmera.png','摄像头',cameraSwitch,'6/6',true),
+              child: _switchRoom('images/icon_canmera.png','摄像头',cameraSwitch,'6/6',true,''),
             )),
             new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_light.png','灯',lightSwitch,'2/3',true),
+              child: _switchRoom('images/icon_light.png','灯',lightSwitch,'2/3',true,''),
             )),
             new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_inductor.png','感应器',decSwitch,'2/3',true),
+              child: _switchRoom('images/icon_inductor.png','感应器',decSwitch,'2/3',true,''),
             )),
           ],
         )),
@@ -300,13 +484,13 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(0.0,0.0,0.0,1.0),
-              child: _switchRoom('images/icon_doorbell.png', '门铃', bellSwitch, '6/6',true),
+              child: _switchRoom('images/icon_doorbell.png', '门铃', bellSwitch, '6/6',true,''),
             )),
             new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 0.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_livingroom.png', '电视', tvSwitch, '1/2',false),
+              child: _switchRoom('images/icon_livingroom.png', '电视', tvSwitch, '1/2',false,''),
             )),
             new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 0.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_centercontrol.png', '中控', centerControlSwitch, '2/3',true),
+              child: _switchRoom('images/icon_centercontrol.png', '中控', centerControlSwitch, '2/3',true,''),
             )),
           ],
         ))
@@ -337,16 +521,12 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
                 padding: const EdgeInsets.only(top: 1.0),
                 child: new Container(
                   color: Colors.white,
-                  child: new ListView(
+                  child: new ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    children: <Widget>[
-                      _createSceneBtn(scene[0].iconN, scene[0].iconS, scene[0].text, 0, inHomeSelect),
-                      _createSceneBtn(scene[1].iconN, scene[1].iconS, scene[1].text, 1, outHomeSelect),
-                      _createSceneBtn(scene[2].iconN, scene[2].iconS, scene[2].text, 2, wakeupSelect),
-                      _createSceneBtn(scene[3].iconN, scene[3].iconS, scene[3].text, 3, sleepSelect),
-                      _createSceneBtn(scene[4].iconN, scene[4].iconS, scene[4].text, 4, eatingSelect),
-                    ],
+                    itemBuilder: (BuildContext context, int index) => sceneList[index],
+                    itemCount: sceneList.length,
                   ),
+
                 )),
           ),
           new Container(
@@ -354,35 +534,40 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
             child: new Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                new Expanded(child: new GestureDetector(
-                  onTap: (){
-                    print('房间');
-                    setState((){
-                      sceneType = SceneType.SceneRoom;
-                    });
-                  },
-                  child: new Container(
-                    color: Colors.white,
-                    child: new Column(
-                      children: <Widget>[
-                        new Container(
-                          padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 5.0),
-                          child: new Text('房间',textAlign: TextAlign.center,style: new TextStyle(
-                              color: sceneType == SceneType.SceneRoom?Colors.red:Colors.grey
-                          ),),
-                        ),
-                        new Container(
-                          color: sceneType == SceneType.SceneRoom?const Color.fromRGBO(254, 189, 148, 1.0):Colors.white,
-                          child: new SizedBox(
-                            width: 45.0,
-                            height: 5.0,
+                new Expanded(child: new Padding(padding: const EdgeInsets.only(right: 0.5),
+                    child: new GestureDetector(
+                      onTap: (){
+                        print('房间');
+                        setState((){
+                          sceneType = SceneType.SceneRoom;
+                        });
+                      },
+                      child: new Container(
+                        padding: const EdgeInsets.only(bottom: 1.0),
+                        child: new Container(
+                          color: Colors.white,
+                          child: new Column(
+                            children: <Widget>[
+                              new Container(
+                                padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 5.0),
+                                child: new Text('房间',textAlign: TextAlign.center,style: new TextStyle(
+                                    color: sceneType == SceneType.SceneRoom?Colors.red:Colors.grey
+                                ),),
+                              ),
+                              new Container(
+                                color: sceneType == SceneType.SceneRoom?const Color.fromRGBO(254, 189, 148, 1.0):Colors.white,
+                                child: new SizedBox(
+                                  width: 45.0,
+                                  height: 5.0,
+                                ),
+                              )
+                            ],
                           ),
-                        )
-                      ],
+                        ),
+                      ),
                     ),
-                  ),
                 )),
-                new Expanded(child: new Padding(padding: const EdgeInsets.only(left: 1.0),
+                new Expanded(child: new Padding(padding: const EdgeInsets.only(left: 0.5),
                     child: new GestureDetector(
                       onTap: (){
                         print('类型');
@@ -391,23 +576,26 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
                         });
                       },
                       child: new Container(
-                        color: Colors.white,
-                        child: new Column(
-                          children: <Widget>[
-                            new Container(
-                              padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 5.0),
-                              child: new Text('类型',textAlign: TextAlign.center,style: new TextStyle(
-                                  color: sceneType == SceneType.SceneClass?Colors.red:Colors.grey
-                              ),),
-                            ),
-                            new Container(
-                              color: sceneType == SceneType.SceneClass?const Color.fromRGBO(254, 189, 148, 1.0):Colors.white,
-                              child: new SizedBox(
-                                width: 45.0,
-                                height: 5.0,
+                        padding: const EdgeInsets.only(bottom: 1.0),
+                        child: new Container(
+                          color: Colors.white,
+                          child: new Column(
+                            children: <Widget>[
+                              new Container(
+                                padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 5.0),
+                                child: new Text('类型',textAlign: TextAlign.center,style: new TextStyle(
+                                    color: sceneType == SceneType.SceneClass?Colors.red:Colors.grey
+                                ),),
                               ),
-                            )
-                          ],
+                              new Container(
+                                color: sceneType == SceneType.SceneClass?const Color.fromRGBO(254, 189, 148, 1.0):Colors.white,
+                                child: new SizedBox(
+                                  width: 45.0,
+                                  height: 5.0,
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     )
@@ -415,7 +603,7 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
               ],
             ),
           ),
-          sceneType == SceneType.SceneRoom?_createSceneRoom():_createSceneClass()
+          sceneType == SceneType.SceneRoom?_createSceneRoom():_createSceneClass1()
         ],
       )
     );
@@ -423,9 +611,20 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
 }
 
 class Scene{
-  Scene(this.iconN,this.iconS,this.text);
-  
+  Scene(
+      this.iconN,
+      this.iconS,
+      this.text,
+      this.sceneId,
+      this.enable,
+      );
+
   final String iconN;
   final String iconS;
+  //场景名
   final String text;
+  //场景id
+  final String sceneId;
+  //是否开启
+  int enable;
 }

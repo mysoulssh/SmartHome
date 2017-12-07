@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:watchapp_flutter/Tools/action_btn.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+
 
 class MeChangePwdScene extends StatefulWidget{
   @override
@@ -107,7 +111,23 @@ class _MeChangePwdSceneState extends State<MeChangePwdScene>{
             padding: const EdgeInsets.only(top: 100.0),
             child: new Center(
               child: new ActionBtn(text: '完成',callback: (){
-                Navigator.of(context).pop();
+
+                if (newPwdControl.text != '' && oldPwdControl.text != '') {
+                  showDialog(context: context, child: new Center(
+                    child: new CircularProgressIndicator(),
+                  ));
+                  httpManage.userChangePass(
+                      UserAccessModel.accessModel.accessToken,
+                      newPwdControl.text, (Map map) {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  }, (String errorMsg) {
+                    Navigator.of(context).pop();
+                  });
+                }else{
+                  ShowInfo.showInfo(context,content: '请输入完整信息');
+                }
+
               },),
             ),
           )

@@ -29,7 +29,7 @@ class _MeMemberInfoSceneState extends State<MeMemberInfoScene>{
               builder: (BuildContext contex) => new NavigationBar(detailInfoScene, widget.likeName)
           ));
         }else if (index == 1){
-          DeviceScene deviceScene = new DeviceScene('设备管理');
+          DeviceScene deviceScene = new DeviceScene('设备管理',EnterType.typeMe);
           Navigator.of(context).push(new MaterialPageRoute(
               builder: (BuildContext context) => new NavigationBar(deviceScene, '设备',
                 actions: <Widget>[

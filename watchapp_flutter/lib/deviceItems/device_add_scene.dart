@@ -5,20 +5,38 @@ import 'package:watchapp_flutter/main_navbar.dart';
 import 'cells/scene_cell.dart';
 import 'cells/action_scene_cell_model.dart';
 import 'device_add_centercontrol.dart';
+import 'package:watchapp_flutter/grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
+import 'package:watchapp_flutter/deviceItems/models/subdevice_info_model.dart';
+import 'package:watchapp_flutter/Tools/type_judgment.dart';
+import 'package:watchapp_flutter/deviceItems/models/scene_info_model.dart';
+import 'package:watchapp_flutter/Tools/type_judgment.dart';
+
 
 class DeviceAddScene extends StatefulWidget{
-  DeviceAddScene(this.isEditScene,{this.sceneTitle});
+  DeviceAddScene(
+      this.isEditScene,
+      {
+        this.sceneTitle,
+        this.sceneId = '',
+        this.cmd,
+        this.sceneInfoModel
+      });
 
   bool isEditScene;
   String sceneTitle;
+  String sceneId;
+  List<SIOTCMD> cmd;
+
+  SceneInfoModel sceneInfoModel;
+
+  _DeviceAddSceneState sceneState = new _DeviceAddSceneState();
 
   @override
-  _DeviceAddSceneState createState() => new _DeviceAddSceneState();
+  _DeviceAddSceneState createState() => sceneState;
 }
 
 class _DeviceAddSceneState extends State<DeviceAddScene>{
   final TextEditingController editController = new TextEditingController();
-
 
   List<SceneCell> _cell = <SceneCell>[];
 
@@ -27,22 +45,24 @@ class _DeviceAddSceneState extends State<DeviceAddScene>{
     super.initState();
     editController.text = widget.sceneTitle;
     if (widget.isEditScene) {
-      _cell.add(new SceneCell(
-        model: new ActionSceneCellModel(
+      for (var v in widget.sceneInfoModel.cmd.cmd){
+        _cell.add(new SceneCell(model: new ActionSceneCellModel(
           image: new Image(image: new AssetImage('images/testIcon.jpg')),
-          deviceName: '小米冰箱',
-          location: '客厅',
-          status: 0,
+          deviceName: TypeJudgment.judgmentType(v.subDeviceId.substring(4,8)),
+          location: '控制器',
+          status: v.argInt32.first==1?0:1,
         ),
-      ));
-      _cell.add(new SceneCell(
-        model: new ActionSceneCellModel(
-          image: new Image(image: new AssetImage('images/testIcon.jpg')),
-          deviceName: '小米55寸智能电视',
-          location: '卧室',
-          status: 2,
-        ),
-      ));
+          switchBtnClickCallback: (bool isTurnOn){
+            v.argInt32.removeAt(0);
+            v.argInt32.insert(0, isTurnOn?1:0);
+          },
+        ));
+      }
+      editController.text = widget.sceneInfoModel.sceneName;
+    }
+
+    if (widget.cmd == null){
+      widget.cmd = <SIOTCMD>[];
     }
   }
 
@@ -104,44 +124,105 @@ class _DeviceAddSceneState extends State<DeviceAddScene>{
               print('执行添加动作操作');
 
               if (widget.isEditScene){      //修改场景
-                DeviceAddAction actionScene = new DeviceAddAction(callback: (ActionSceneCellModel model){
-                  bool isSame = false;
-                  for (SceneCell tmp in _cell){
-                    if (tmp.cellModel.deviceName == model.deviceName){
-                      isSame = true;
-                      tmp.reloadCell(model);
-                      break;
+                if (widget.sceneInfoModel.cmd.cmd.length > 0){
+                  DeviceAddAction actionScene = new DeviceAddAction(deviceId: widget.sceneInfoModel.cmd.cmd.first.deviceId,callback: (ActionSceneCellModel model, SubDeviceInfoModel subDeviceInfoModel){
+                    bool isSame = false;
+                    for (SceneCell tmp in _cell){
+                      if (tmp.cellModel.deviceName == model.deviceName){
+                        isSame = true;
+                        tmp.reloadCell(model);
+                        break;
+                      }
                     }
-                  }
-                  if (!isSame){
-                    _cell.add(new SceneCell(model: model));
-                  }
-                },);
-                Navigator.of(context).push(new MaterialPageRoute(
-                    builder: (BuildContext context){
-                      return new NavigationBar(actionScene, '添加动作');
+                    if (!isSame){
+                      _cell.add(new SceneCell(model: model));
                     }
-                ));
+                  },);
+                  Navigator.of(context).push(new MaterialPageRoute(
+                      builder: (BuildContext context){
+                        return new NavigationBar(actionScene, '添加动作');
+                      }
+                  ));
+                }else{
+                  DeviceCenterControl centerScene = new DeviceCenterControl(callback: (ActionSceneCellModel model, SubDeviceInfoModel subDeviceInfoModel){
+                    bool isSame = false;
+                    for (SceneCell tmp in _cell){
+                      if (tmp.cellModel.deviceName == model.deviceName){
+                        isSame = true;
+                        tmp.reloadCell(model);
+                        break;
+                      }
+                    }
+                    if (!isSame){
+                      _cell.add(new SceneCell(model: model));
+
+                      SIOTCMD cmd = new SIOTCMD()
+                        ..deviceId    = model.deviceId
+                        ..subDeviceId = model.subDeviceInfoModel.subDeviceId
+                        ..cmdType     = 1
+                        ..cmdid       = TypeJudgment.judgmentDeviceCmdType(model.subDeviceInfoModel.subDeviceId.substring(4,8))
+                        ..argInt32.add(model.status == 1?0:1)
+                      ;
+
+                      widget.sceneInfoModel.cmd.cmd.add(cmd);
+                    }
+                  },);
+                  Navigator.of(context).push(new MaterialPageRoute(
+                      builder: (BuildContext context){
+                        return new NavigationBar(centerScene, '选择中控器');
+                      }
+                  ));
+                }
               }else{                        //添加场景
-                DeviceCenterControl centerScene = new DeviceCenterControl(callback: (ActionSceneCellModel model){
-                  widget.isEditScene = true;
-                  bool isSame = false;
-                  for (SceneCell tmp in _cell){
-                    if (tmp.cellModel.deviceName == model.deviceName){
-                      isSame = true;
-                      tmp.reloadCell(model);
-                      break;
+                if (widget.cmd.length > 0){
+                  DeviceAddAction actionScene = new DeviceAddAction(deviceId: widget.cmd.first.deviceId,callback: (ActionSceneCellModel model, SubDeviceInfoModel subDeviceInfoModel){
+                    bool isSame = false;
+                    for (SceneCell tmp in _cell){
+                      if (tmp.cellModel.deviceName == model.deviceName){
+                        isSame = true;
+                        tmp.reloadCell(model);
+                        break;
+                      }
                     }
-                  }
-                  if (!isSame){
-                    _cell.add(new SceneCell(model: model));
-                  }
-                },);
-                Navigator.of(context).push(new MaterialPageRoute(
-                    builder: (BuildContext context){
-                      return new NavigationBar(centerScene, '选择中控器');
+                    if (!isSame){
+                      _cell.add(new SceneCell(model: model));
                     }
-                ));
+                  },);
+                  Navigator.of(context).push(new MaterialPageRoute(
+                      builder: (BuildContext context){
+                        return new NavigationBar(actionScene, '添加动作');
+                      }
+                  ));
+                }else{
+                  DeviceCenterControl centerScene = new DeviceCenterControl(callback: (ActionSceneCellModel model, SubDeviceInfoModel subDeviceInfoModel){
+                    bool isSame = false;
+                    for (SceneCell tmp in _cell){
+                      if (tmp.cellModel.deviceName == model.deviceName){
+                        isSame = true;
+                        tmp.reloadCell(model);
+                        break;
+                      }
+                    }
+                    if (!isSame){
+                      _cell.add(new SceneCell(model: model));
+
+                      SIOTCMD cmd = new SIOTCMD()
+                        ..deviceId    = model.deviceId
+                        ..subDeviceId = model.subDeviceInfoModel.subDeviceId
+                        ..cmdType     = 1
+                        ..cmdid       = TypeJudgment.judgmentDeviceCmdType(model.subDeviceInfoModel.subDeviceId.substring(4,8))
+                        ..argInt32.add(model.status == 1?0:1)
+                      ;
+
+                      widget.cmd.add(cmd);
+                    }
+                  },);
+                  Navigator.of(context).push(new MaterialPageRoute(
+                      builder: (BuildContext context){
+                        return new NavigationBar(centerScene, '选择中控器');
+                      }
+                  ));
+                }
               }
             },),
           )

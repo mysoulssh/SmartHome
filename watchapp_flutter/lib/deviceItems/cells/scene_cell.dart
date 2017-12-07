@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'action_scene_cell_model.dart';
 
+typedef SwitchBtnClickCallback(bool isTurnOn);
+
+
 class SceneCell extends StatefulWidget{
 
 //  SceneCell({this.image,this.deviceName,this.location,this.isTurnOn});
   SceneCell({
-    ActionSceneCellModel model
+    ActionSceneCellModel model,
+    this.switchBtnClickCallback,
   })  : image = model.image,
         deviceName = model.deviceName,
         location = model.location,
@@ -22,6 +26,8 @@ class SceneCell extends StatefulWidget{
   bool isTurnOn;
   //模型
   ActionSceneCellModel cellModel;
+  //开关回调
+  SwitchBtnClickCallback switchBtnClickCallback;
 
 
   void reloadCell(ActionSceneCellModel model){
@@ -82,6 +88,7 @@ class _SceneCellState extends State<SceneCell>{
                       child: new GestureDetector(
                         onTap: (){
                           widget.isTurnOn = !widget.isTurnOn;
+                          widget.switchBtnClickCallback(widget.isTurnOn);
                           setState((){});
                         },
                         child: new Stack(

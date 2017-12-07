@@ -3,6 +3,7 @@ import 'package:grpc/grpc.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/DeviceInfoGet/DeviceInfoGet.pb.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/DeviceInfoGet/DeviceInfoGet.pbgrpc.dart';
+import 'package:watchapp_flutter/deviceItems/models/device_detail_info_model.dart';
 
 
 typedef DeviceInfoGetFailureCallback(String msg);
@@ -25,7 +26,7 @@ class DeviceInfoGetRequest {
   }
 
   //获取个人信息
-  Future<RpcResponse> deviceInfoGet(List<String> deviceId, String accessToken, DeviceInfoGetFailureCallback failureCallback) async{
+  Future<List<DeviceDetailInfoModel>> deviceInfoGet(List<String> deviceId, String accessToken, DeviceInfoGetFailureCallback failureCallback) async{
     final rpcRequest = new RpcRequest()
       ..accessToken = accessToken;
 
@@ -33,10 +34,28 @@ class DeviceInfoGetRequest {
       rpcRequest.deviceId.add(v);
     }
 
-    RpcResponse response;
+    List<DeviceDetailInfoModel> models = <DeviceDetailInfoModel>[];
 
     try{
-      response = await shareRpcYCall().yCall(rpcRequest);
+      RpcResponse response= await shareRpcYCall().yCall(rpcRequest);
+
+      if (response.vers.length > 0){
+        for (var v in response.vers){
+          DeviceDetailInfoModel infoModel = new DeviceDetailInfoModel()
+              ..deviceId    = v.deviceId
+              ..prodtCode   = v.prodtCode
+              ..productCode = v.productCode
+              ..productName = v.productName
+              ..companyCode = v.companyCode
+              ..pic1Fileid  = v.pic1Fileid
+              ..pic2Fileid  = v.pic2Fileid
+              ..pic3Fileid  = v.pic3Fileid
+              ..swVer       = v.swVer
+              ..hwVer       = v.hwVer
+              ..nbiCode     = v.nbiCode;
+          models.add(infoModel);
+        }
+      }
 
     }catch(e){
       String error = e.message;
@@ -47,6 +66,6 @@ class DeviceInfoGetRequest {
       }
     }
 
-    return response;
+    return models;
   }
 }

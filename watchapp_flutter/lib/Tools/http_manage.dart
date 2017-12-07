@@ -44,6 +44,27 @@ import 'http_request/device_ver_set_request.dart';
 import 'http_request/event_rule_add_request.dart';
 import 'http_request/event_rule_del_request.dart';
 import 'http_request/event_rule_edit_request.dart';
+import 'http_request/event_rule_list_request.dart';
+import 'http_request/event_rule_set_request.dart';
+import 'http_request/house_add_request.dart';
+import 'http_request/house_area_add_request.dart';
+import 'http_request/house_list_request.dart';
+import 'http_request/house_area_list_request.dart';
+import 'http_request/house_del_request.dart';
+import 'http_request/user_device_add_request.dart';
+import 'http_request/user_device_del_request.dart';
+import 'http_request/user_device_edit_request.dart';
+import 'http_request/user_device_list_request.dart';
+import 'http_request/scene_add_request.dart';
+import 'http_request/scene_del_request.dart';
+import 'http_request/scene_edit_request.dart';
+import 'http_request/scene_list_request.dart';
+import 'http_request/scene_active_request.dart';
+import 'http_request/house_device_list.dart';
+import 'http_request/house_area_device_del_request.dart';
+import 'http_request/house_area_device_set_requset.dart';
+import 'http_request/user_phone_change.dart';
+import 'http_request/user_change_pass.dart';
 
 
 typedef SuccessCallback(Map map);
@@ -393,7 +414,7 @@ class HttpManage{
     request.deviceHubDeviceList(accessToken, deviceId, failureCallback).then((onValue){
       if (onValue == null) return;
       callback({
-
+        'models':onValue
       });
     });
   }
@@ -438,7 +459,7 @@ class HttpManage{
     request.deviceInfoGet(deviceId, accessToken,failureCallback).then((onValue){
       if (onValue == null) return;
       callback({
-
+        'models':onValue
       });
     });
   }
@@ -535,16 +556,16 @@ class HttpManage{
   }
 
   //设备在离线信息设置 (HUB下的子设备),独立设备的在离线情况也可使用此接口 (重名  DeviceFailCode)
-  void deviceStatusGet(String accessToken, List<QueryInfo> query, SuccessCallback callback, DeviceStatusGetFailureCallback failureCallback){
+  void deviceStatusGet(String accessToken, List query, SuccessCallback callback, DeviceStatusGetFailureCallback failureCallback){
     DeviceStatusGetRequest request = new DeviceStatusGetRequest(shareChannel(),
       clientId: clientId,
       reqTime: _getReqTime(),
       signKey: _getMd5(),);
 
-    request.deviceStatusGet(accessToken, null, failureCallback).then((onValue){
+    request.deviceStatusGet(accessToken, query, failureCallback).then((onValue){
       if (onValue == null) return;
       callback({
-
+        'models':onValue
       });
     });
   }
@@ -620,7 +641,7 @@ class HttpManage{
       request.eventRuleAdd(deviceId, accessToken, houseGuid, etName, prio, enable, onlyTime, lhs, isEnd, exprs, rhs, failureCallback).then((onValue){
         if (onValue == null) return;
         callback({
-
+          'etId':onValue.etId
         });
       });
   }
@@ -667,7 +688,366 @@ class HttpManage{
     });
   }
 
+  //获取智能联动
+  void eventRuleList(String accessToken, int page, int pageSize, String houseGuid, SuccessCallback callback, EventRuleListFailureCallback failureCallback){
+    EventRuleListRequest request = new EventRuleListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
 
-  //
+    request.eventRuleList(accessToken, page, pageSize, houseGuid, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //设置智能联动
+  void eventRuleSet(String accessToken, String etId, int setType, int setValue, SuccessCallback callback, EventRuleSetFailureCallback failureCallback){
+    EventRuleSetRequest request = new EventRuleSetRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.eventRuleSet(accessToken, etId, setType, setValue, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //用户添加House
+  void houseAdd(String accessToken, String houseName, SuccessCallback callback, HouseAddFailureCallback failureCallback){
+    HouseAddRequest request = new HouseAddRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseAdd(accessToken, houseName, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'houseGuid':onValue.houseGuid
+      });
+    });
+  }
+
+  //添加区域
+  void houseAreaAdd(String accessToken, String houseGuid, String areaName,  SuccessCallback callback, HouseAreaAddFailureCallback failureCallback){
+    HouseAreaAddRequest request = new HouseAreaAddRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseAreaAdd(accessToken, houseGuid, areaName, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'areaGuid':onValue.areaGuid
+      });
+    });
+  }
+
+  //获取House列表
+  void houseList(String accessToken, String houseGuid, SuccessCallback callback, HouseListFailureCallback failureCallback){
+    HouseListRequest request = new HouseListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseList(accessToken, houseGuid, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'houses':onValue
+      });
+    });
+  }
+
+  //获取区域列表
+  void houseAreaList(String accessToken, String houseGuid, SuccessCallback callback, HouseAreaListFailureCallback failureCallback){
+    HouseAreaListRequest request = new HouseAreaListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseAreaList(accessToken, houseGuid, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'areas':onValue
+      });
+    });
+  }
+
+  //删除家庭
+  void houseDel(String accessToken, String houseGuid, SuccessCallback callback, HouseDelFailureCallback failureCallback){
+    HouseDelRequest request = new HouseDelRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseDel(accessToken, houseGuid, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'houseGuid':onValue
+      });
+    });
+  }
+
+  //用户添加设备
+  void userDeviceAdd(String accessToken, String deviceId, String deviceName, SuccessCallback callback, UserDeviceAddFailureCallback failureCallback){
+    UserDeviceAddRequest request = new UserDeviceAddRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userDeviceAdd(accessToken, deviceId, deviceName, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //用户删除设备
+  void userDeviceDel(String accessToken, String deviceId, SuccessCallback callback, UserDeviceDelFailureCallback failureCallback){
+    UserDeviceDelRequest request = new UserDeviceDelRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userDeviceDel(accessToken, deviceId, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //用户编辑设备
+  void userDeviceEdit(String accessToken, String deviceId, String deviceName, SuccessCallback callback, UserDeviceEditFailureCallback failureCallback){
+    UserDeviceEditRequest request = new UserDeviceEditRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userDeviceEdit(accessToken, deviceId, deviceName, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //用户设备列表
+  void userDeviceList(String accessToken, int page, int pageSize, SuccessCallback callback, UserDeviceListFailureCallback failureCallback){
+    UserDeviceListRequest request = new UserDeviceListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userDeviceList(accessToken, page, pageSize, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //添加场景
+  void sceneAdd(String accessToken, String houseGuid, String sceneName, String sceneId, IOTCMD cmd, SuccessCallback callback, SceneAddFailureCallback failureCallback){
+    SceneAddRequest request = new SceneAddRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.sceneAdd(accessToken, houseGuid, sceneName, sceneId, cmd, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //删除场景
+  void sceneDel(String accessToken, String sceneId, SuccessCallback callback, SceneDelFailureCallback failureCallback){
+    SceneDelRequest request = new SceneDelRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.sceneDel(accessToken, sceneId, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //编辑场景
+  void sceneEdit(String accessToken,  String sceneName, String sceneId, IOTCMD cmd, SuccessCallback callback, SceneAddFailureCallback failureCallback){
+    SceneEditRequest request = new SceneEditRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.sceneEdit(accessToken,  sceneName, sceneId, cmd, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //获取场景
+  void sceneList(String accessToken, String houseGuid, int page, int pageSize, SuccessCallback callback, SceneListFailureCallback failureCallback){
+    SceneListRequest request = new SceneListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.sceneList(accessToken,  houseGuid, page, pageSize, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //开启场景
+  void sceneActive(String accessToken, String houseGuid, String sceneId, SuccessCallback callback, SceneActiveFailureCallback failureCallback){
+    SceneActiveRequest request = new SceneActiveRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.sceneActive(accessToken,  houseGuid, sceneId, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //获取家庭设备
+  void houseDeviceList(
+      String accessToken,
+      String houseGuid,
+      int page,
+      int pageSize,
+      SuccessCallback callback,
+      HouseDeviceListFailureCallback failureCallback,
+      {
+        String prodtType='',
+        String areaGuid,
+      }){
+    HouseDeviceListRequest request = new HouseDeviceListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseDeviceList(
+        accessToken,
+        houseGuid,
+        page,
+        pageSize,
+        failureCallback,
+        prodtType: prodtType,
+        areaGuid: areaGuid
+    ).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //删除区域设备
+  void houseAreaDeviceDel(String accessToken, String houseGuid, String areaGuid, String deviceId, String subDeviceId, SuccessCallback callback, HouseAreaDeviceDelFailureCallback failureCallback){
+    HouseAreaDeviceDelRequest request = new HouseAreaDeviceDelRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseAreaDeviceDel(
+        accessToken,
+        houseGuid,
+        areaGuid,
+        deviceId,
+        subDeviceId='',
+        failureCallback,
+    ).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //添加（编辑）区域设备
+  void houseAreaDeviceSet(String accessToken, String houseGuid, String areaGuid, String deviceId, String subDeviceId, SuccessCallback callback, HouseAreaDeviceDelFailureCallback failureCallback){
+    HouseAreaDeviceSetRequest request = new HouseAreaDeviceSetRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.houseAreaDeviceSet(
+      accessToken,
+      houseGuid,
+      areaGuid,
+      deviceId,
+      subDeviceId,
+      failureCallback,
+    ).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //用户修改手机号
+  void userPhoneChange(
+      String accessToken,
+      String oldPhone,
+      String oldVcode,
+      String newPhone,
+      String newVcode,
+      SuccessCallback callback,
+      UserPhoneChangeFailureCallback failureCallback){
+    UserPhoneChangeRequest request = new UserPhoneChangeRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userPhoneChange(
+      accessToken,
+      oldPhone,
+      oldVcode,
+      newPhone,
+      newVcode,
+      failureCallback,
+    ).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //修改密码
+  void userChangePass(String accessToken, String newPass, SuccessCallback callback, UserChangePassFailureCallback failureCallback){
+    UserChangePassRequest request = new UserChangePassRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userChangePass(accessToken, newPass, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
 
 }

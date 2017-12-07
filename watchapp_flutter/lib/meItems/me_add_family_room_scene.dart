@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 typedef AddFamilyRoomSceneCallback(String roomName);
 
 class MeAddFamilyRoomScene extends StatefulWidget{
+
+  _MeAddFamilyRoomSceneState roomSceneState = new _MeAddFamilyRoomSceneState();
+
   @override
-  _MeAddFamilyRoomSceneState createState() => new _MeAddFamilyRoomSceneState();
+  _MeAddFamilyRoomSceneState createState() => roomSceneState;
 }
 
 class _MeAddFamilyRoomSceneState extends State<MeAddFamilyRoomScene>{

@@ -3,6 +3,7 @@ import 'package:grpc/grpc.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/DeviceHubDeviceList/DeviceHubDeviceList.pb.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/DeviceHubDeviceList/DeviceHubDeviceList.pbgrpc.dart';
+import 'package:watchapp_flutter/deviceItems/models/subdevice_info_model.dart';
 
 
 typedef DeviceHubDeviceListFailureCallback(String msg);
@@ -25,15 +26,25 @@ class DeviceHubDeviceListRequest {
   }
 
   //获取个人信息
-  Future<RpcResponse> deviceHubDeviceList(String accessToken, String deviceId, DeviceHubDeviceListFailureCallback failureCallback) async{
+  Future<List<SubDeviceInfoModel>> deviceHubDeviceList(String accessToken, String deviceId, DeviceHubDeviceListFailureCallback failureCallback) async{
     final rpcRequest = new RpcRequest()
       ..deviceId = deviceId
       ..accessToken = accessToken;
 
-    RpcResponse response;
+    List<SubDeviceInfoModel> models = <SubDeviceInfoModel>[];
 
     try{
-      response = await shareRpcYCall().yCall(rpcRequest);
+      RpcResponse response = await shareRpcYCall().yCall(rpcRequest);
+
+      for (var v in response.subDevs){
+        SubDeviceInfoModel infoModel = new SubDeviceInfoModel()
+            ..deviceName  = v.deviceName
+            ..subDeviceId = v.subDeviceId
+            ..createTime  = v.createTime
+            ..productId   = v.productId;
+
+        models.add(infoModel);
+      }
 
     }catch(e){
       String error = e.message;
@@ -44,6 +55,6 @@ class DeviceHubDeviceListRequest {
       }
     }
 
-    return response;
+    return models;
   }
 }

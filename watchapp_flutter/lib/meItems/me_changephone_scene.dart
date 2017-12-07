@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:watchapp_flutter/Tools/action_btn.dart';
 import 'package:watchapp_flutter/Tools/send_code_btn.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+
+import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
 
 class MeChangePhoneScene extends StatefulWidget{
 
@@ -14,6 +18,29 @@ class _MeChangePhoneSceneState extends State<MeChangePhoneScene> with TickerProv
   final TextEditingController oldController      = new TextEditingController();
   final TextEditingController newController      = new TextEditingController();
   final TextEditingController newPhoneController = new TextEditingController();
+  final TextEditingController oldPhoneController = new TextEditingController();
+
+
+  @override
+  void initState(){
+    super.initState();
+
+    oldPhoneController.text = '12345678901';
+  }
+
+  bool shouldChangePhone(){
+    bool isAllow = true;
+    if (
+        oldController.text == ''||
+        newController.text == ''||
+        newPhoneController.text == ''
+    ){
+      isAllow = false;
+      ShowInfo.showInfo(context,content: '手机号或验证码不能为空');
+    }
+
+    return isAllow;
+  }
 
   @override
   Widget build(BuildContext context){
@@ -33,7 +60,7 @@ class _MeChangePhoneSceneState extends State<MeChangePhoneScene> with TickerProv
                   ),
                 ),
                 new Expanded(child: new Container(
-                  child: new Text('12345678901',style: new TextStyle(fontSize: 16.0),),
+                  child: new Text(oldPhoneController.text,style: new TextStyle(fontSize: 16.0),),
                 )),
                 new Expanded(child: new Container(
                   padding: const EdgeInsets.only(right: 8.0),
@@ -89,11 +116,36 @@ class _MeChangePhoneSceneState extends State<MeChangePhoneScene> with TickerProv
             padding: const EdgeInsets.only(right: 8.0),
             alignment: Alignment.centerRight,
             child: new SendCodeBtn(text: '发送验证码',callback: (){
-
+              if (newPhoneController.text != ''){
+                httpManage.sendCode(oldPhoneController.text, 3,(String errorMsg){
+                  ShowInfo.showInfo(context,content: errorMsg);
+                });
+                httpManage.sendCode(newPhoneController.text, 3,(String errorMsg){
+                  ShowInfo.showInfo(context,content: errorMsg);
+                });
+              }else{
+                ShowInfo.showInfo(context,content: '新手机号不能为空');
+              }
             },),
           ),
           new Expanded(child: new ActionBtn(text: '完成',callback: (){
               print('完成');
+
+              if (!shouldChangePhone()){
+                return ;
+              }
+
+              httpManage.userPhoneChange(
+                  UserAccessModel.accessModel.accessToken,
+                  oldPhoneController.text,
+                  oldController.text,
+                  newPhoneController.text,
+                  newController.text,
+                      (Map map){
+
+                      }, (String errorMsg){
+                    print('修改手机号码错误信息：$errorMsg');
+              });
             },
           ))
         ],

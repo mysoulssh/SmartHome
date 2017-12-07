@@ -5,6 +5,7 @@ import 'package:watchapp_flutter/Tools/http_manage.dart';
 import 'package:watchapp_flutter/Tools/md5_text.dart';
 import 'package:watchapp_flutter/Tools/user_access_model.dart';
 import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+import 'package:watchapp_flutter/meItems/models/house_info_model.dart';
 
 
 class LoginScene extends StatefulWidget{
@@ -21,10 +22,6 @@ class _LoginSceneState extends State<LoginScene>{
   bool isRemenberPwd = true;
 
   var loginAllEdge = new EdgeInsets.all(8.0);
-
-  void _rebuild(){
-    setState((){});
-  }
 
   bool checkShouldLogin(){
     bool shouldLogin = true;
@@ -152,13 +149,31 @@ class _LoginSceneState extends State<LoginScene>{
                               onTap: (){
                                 if (checkShouldLogin() == false) return;
                                 print('登录');
-                                httpManage.loginCode(accountController.text, MD5Text.convertMD5(pwdController.text), (Map map){
 
+                                showDialog(context: context, child: new Center(
+                                  child: new CircularProgressIndicator(),
+                                ));
+
+                                httpManage.loginCode(accountController.text, MD5Text.convertMD5(pwdController.text), (Map map){
                                   UserAccessModel accessModel = map['accessModel'];
                                   accessModel.userName = accountController.text;
-                                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
 
+                                  httpManage.houseList(UserAccessModel.accessModel.accessToken, '', (Map map){
+                                    Navigator.of(context).pop();
+
+                                    List<HouseInfoModel> houseModels = map['houses'];
+                                    if(houseModels.length > 0){
+                                      Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp(houseGuid: houseModels.first.houseGuid,)));
+                                    }else{
+                                      Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
+                                    }
+                                  }, (String errorMsg){
+                                    print('$errorMsg');
+                                  });
+//18200550780
                                 }, (String errorMsg){
+                                  Navigator.of(context).pop();
+
                                   ShowInfo.showInfo(context,content: errorMsg);
                                 });
 

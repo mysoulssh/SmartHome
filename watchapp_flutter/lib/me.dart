@@ -130,22 +130,34 @@ class _MineItemState extends State<MineItem> {
           }
           break;
           case 2:{        //我的设备
-            DeviceScene deviceScene = new DeviceScene('我的设备');
+            DeviceScene deviceScene = new DeviceScene('我的设备',EnterType.typeMe);
             Navigator.of(context).push(new MaterialPageRoute(
                 builder: (BuildContext context) => new NavigationBar(deviceScene, '设备',
                   actions: <Widget>[
                     new RightBtnItem('添加', (){
                       setState((){
                         ScanQRCode.showQRCodeReader((String value){
+                          TextEditingController controller = new TextEditingController();
                           showDialog(context: context, child: new AlertDialog(
-                            title: new Text('扫描结果', textAlign: TextAlign.center),
-                            content: new Text(value, textAlign: TextAlign.center),
+                            title: new Text('提示', textAlign: TextAlign.center,),
+                            content: new TextField(
+                              controller: controller,
+                              textAlign: TextAlign.center,
+                              decoration: new InputDecoration.collapsed(hintText: '请输入设备名称'),
+                            ),
                             actions: <Widget>[
                               new FlatButton(onPressed: (){
+                                if (controller.text == '' || controller.text == null) return;
+                                deviceScene.sceneState.addDevice(controller.text, value);
                                 Navigator.of(context).pop();
-                              }, child: new Text('确定'))
+                              }, child: new Text('确定', style: new TextStyle(color: Colors.blue),)),
+                              new FlatButton(onPressed: (){
+                                Navigator.of(context).pop();
+                              }, child: new Text('取消', style: new TextStyle(color: Colors.red),))
                             ],
                           ));
+
+
                         });
                       });
                     })

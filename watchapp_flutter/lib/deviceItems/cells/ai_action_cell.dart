@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
 typedef SwitchClickCallback(int index,bool isTurnOn);
-typedef SelectCellCallback(int index);
+typedef SelectCellCallback();
 
 class AiActionCell extends StatefulWidget{
 
-  AiActionCell(this.text,this.isTurnOn,{this.callback,this.selectCellCallback,this.index});
+  AiActionCell(this.text,this.isTurnOn,{this.switchClickCallback,this.selectCellCallback,this.index});
 
   final String text;
   bool isTurnOn;
 
-  SwitchClickCallback callback;
+  SwitchClickCallback switchClickCallback;
   SelectCellCallback selectCellCallback;
   int index;
 
@@ -30,7 +30,7 @@ class _AiActionCellState extends State<AiActionCell>{
     return new GestureDetector(
       onTap: (){
         if (widget.selectCellCallback != null){
-          widget.selectCellCallback(widget.index);
+          widget.selectCellCallback();
         }
       },
       child: new Container(
@@ -49,8 +49,8 @@ class _AiActionCellState extends State<AiActionCell>{
                 child: new GestureDetector(
                   onTap: (){
 
-                    if (widget.callback != null){
-                      widget.callback(widget.index,!widget.isTurnOn);
+                    if (widget.switchClickCallback != null){
+                      widget.switchClickCallback(widget.index,!widget.isTurnOn);
                     }
                     widget.isTurnOn = !widget.isTurnOn;
                     setState((){});

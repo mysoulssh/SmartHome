@@ -5,9 +5,19 @@ import 'me_family_member_scene.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
 import 'me_family_room_scene.dart';
 import 'package:watchapp_flutter/Tools/scan_qr_code.dart';
+import 'models/house_info_model.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'models/area_info_model.dart';
 
 
 class MeFamilyInfoScene extends StatefulWidget{
+
+  MeFamilyInfoScene(this.infoModel,this.object);
+
+  HouseInfoModel infoModel;
+  Object object;
+
   @override
   _MeFamilyInfoSceneState createState() => new _MeFamilyInfoSceneState();
 }
@@ -17,7 +27,9 @@ class _MeFamilyInfoSceneState extends State<MeFamilyInfoScene>{
   List<Widget> cells = <Widget>[];
 
   List<String> familyNames = <String>['家庭名称', '家庭成员', '家庭房间', '家庭地址', '二维码'];
-  List<String> infos = <String>['我的家', '4', '2', '孵化园', ''];
+  List<String> infos = <String>[];
+
+  List<AreaInfoModel> infoModels;
 
   final TextEditingController familyNameController = new TextEditingController();
 
@@ -25,7 +37,29 @@ class _MeFamilyInfoSceneState extends State<MeFamilyInfoScene>{
   void initState(){
     super.initState();
 
-    initList();
+    httpManage.houseAreaList(UserAccessModel.accessModel.accessToken, widget.infoModel.houseGuid, (Map map){
+      infoModels = map['areas'];
+
+      infos.add(widget.infoModel.houseName);
+      infos.add(widget.infoModel.role.toString());
+      infos.add(infoModels.length.toString());
+      infos.add(widget.infoModel.addrName);
+      infos.add('');
+
+      initList();
+
+      setState((){});
+    }, (String errorMsg){
+      infos.add('');
+      infos.add('');
+      infos.add('');
+      infos.add('');
+      infos.add('');
+
+      initList();
+      setState((){});
+    });
+
   }
 
   void initList(){
@@ -86,7 +120,9 @@ class _MeFamilyInfoSceneState extends State<MeFamilyInfoScene>{
             ],
           )));
         }else if(index == 2){         //家庭房间
-          MeFamilyRoomScene roomScene = new MeFamilyRoomScene();
+          MeFamilyRoomScene roomScene = new MeFamilyRoomScene(infoModels,widget.infoModel.houseGuid,addRoomCallback: (AreaInfoModel areaInfoModel){
+            infoModels.insert(0, areaInfoModel);
+          },);
           Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new NavigationBar(roomScene, '家庭房间')));
         }else{
           showDialog(context: context, child: new AlertDialog(
@@ -104,7 +140,14 @@ class _MeFamilyInfoSceneState extends State<MeFamilyInfoScene>{
     return new Container(
       padding: const EdgeInsets.only(top: 80.0),
       child: new ActionBtn(text: '解散家庭',callback: (){
-        Navigator.of(context).pop();
+        httpManage.houseDel(UserAccessModel.accessModel.accessToken, widget.infoModel.houseGuid, (Map map){
+          var houseGuid = map['houseGuid'];
+          print('$houseGuid');
+          Navigator.of(context).pop(widget.object);
+
+        }, (String errorMsg){
+
+        });
       },)
     );
   }

@@ -2,9 +2,18 @@ import 'package:flutter/material.dart';
 import 'cells/ai_action_cell.dart';
 import 'ai_add_rule.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'package:watchapp_flutter/grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
+
 
 
 class AiAction extends StatefulWidget{
+
+  AiAction({this.houseGuid});
+
+  String houseGuid;
+
   @override
   _AiActionState createState() => new _AiActionState();
 }
@@ -13,39 +22,58 @@ class _AiActionState extends State<AiAction>{
 
   List<AiActionCell> cell = <AiActionCell>[];
 
-  List<String> aiName = <String>['回家','离家','起床','睡觉'];
-  List<bool> switchList = <bool>[true,false,false,false];
-
   @override
   void initState(){
     super.initState();
-    int i = 0;
-    for(String tmp in aiName){
-      cell.add(new AiActionCell(tmp, switchList[i],selectCellCallback: (int index){
-        print('编辑规则');
-        AiAddRule addRule = new AiAddRule(isEditRule: true,ruleName: tmp,);
-        Navigator.of(context).push(new MaterialPageRoute(
-            builder: (BuildContext context) => new NavigationBar(addRule, '添加规则',
-              actions: <Widget>[
-                new GestureDetector(      //智能联动界面添加规则按钮
-                  onTap: (){
-                    print('添加规则保存');
-                    Navigator.of(context).pop();
-                  },
-                  child: new Container(
-                      padding: const EdgeInsets.all(8.0),
-                      child: new Center(
-                        child: new Text('保存',style: new TextStyle(color: Colors.black,fontSize: 15.0),
-                        ),
-                      )
-                  ),
-                )
-              ],))
-        );
-      },));
-      i++;
-    }
+
+    loadAiActionList(widget.houseGuid);
   }
+
+
+  void loadAiActionList(String houseGuid){
+    if (houseGuid == null) return;
+    httpManage.eventRuleList(UserAccessModel.accessModel.accessToken, 1, 20, houseGuid, (Map map){
+      List<RuleInfo> rules = map['models'];
+      print('$rules');
+
+      for (var v in rules){
+        cell.add(new AiActionCell(v.etName, v.enable==1?true:false,selectCellCallback: (){
+          print('编辑规则');
+          AiAddRule addRule = new AiAddRule(isEditRule: true,ruleName: v.etName, ruleInfo: v,);
+          Navigator.of(context).push(new MaterialPageRoute(
+              builder: (BuildContext context) => new NavigationBar(addRule, '添加规则',
+                actions: <Widget>[
+                  new GestureDetector(      //智能联动界面添加规则按钮
+                    onTap: (){
+                      print('添加规则保存');
+                      Navigator.of(context).pop();
+                    },
+                    child: new Container(
+                        padding: const EdgeInsets.all(8.0),
+                        child: new Center(
+                          child: new Text('保存',style: new TextStyle(color: Colors.black,fontSize: 15.0),
+                          ),
+                        )
+                    ),
+                  )
+                ],))
+          );
+        }, switchClickCallback: (int index,bool isTurnOn){
+          v.enable = isTurnOn?1:2;
+          httpManage.eventRuleSet(UserAccessModel.accessModel.accessToken, v.etId, 1, v.enable, (Map map){
+
+          }, (String errorMsg){
+            print('设置规则开关错误信息:$errorMsg');
+          });
+        },));
+      }
+
+      setState((){});
+    }, (String errorMsg){
+
+    });
+  }
+
 
   @override
   Widget build(BuildContext context){
