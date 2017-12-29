@@ -10,9 +10,10 @@ typedef loginSuccessCallback(int user_id);
 
 class RegistScene extends StatefulWidget{
 
-  RegistScene(this.callback);
+  RegistScene(this.callback,this.isForegetPwd);
 
   final loginSuccessCallback callback;
+  final bool isForegetPwd;
 
   @override
   _RegistSceneState createState() => new _RegistSceneState();
@@ -153,7 +154,7 @@ class _RegistSceneState extends State<RegistScene>{
                                   height: 30.0,
                                   child: new SendCodeBtn(text: '发送验证码',callback: (){
                                     print('发送验证码');
-                                    httpManage.sendCode(accountController.text, 1,(String errorMsg){
+                                    httpManage.sendCode(accountController.text, widget.isForegetPwd?2:1,(String errorMsg){
                                       ShowInfo.showInfo(context,content: errorMsg);
                                     });
 
@@ -170,27 +171,50 @@ class _RegistSceneState extends State<RegistScene>{
                           onTap: (){
                             if(checkShouldRegist() == false) return;
 
-                            print('注册');
-                            httpManage.registCode(accountController.text, codeController.text, pwdController.text, (Map map){
+                            if (widget.isForegetPwd){
+                              print('忘记密码');
 
-                              int user_id = map['user_id'];
-                              print('user_id = $user_id');
+                              httpManage.userLostPass(accountController.text, pwdController.text, codeController.text, (Map map){
 
-                              String pwdMd5 = MD5Text.convertMD5(pwdController.text);
+                                String pwdMd5 = MD5Text.convertMD5(pwdController.text);
 
-                              httpManage.loginCode(accountController.text, pwdMd5, (Map map){
+                                httpManage.loginCode(accountController.text, pwdMd5, (Map map){
 
-                                UserAccessModel accessModel = map['accessModel'];
-                                accessModel.userName = accountController.text;
-                                Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
+                                  UserAccessModel accessModel = map['accessModel'];
+                                  accessModel.userName = accountController.text;
+                                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
 
+                                }, (String errorMsg){
+                                  ShowInfo.showInfo(context,content: errorMsg);
+                                });
                               }, (String errorMsg){
-                                ShowInfo.showInfo(context,content: errorMsg);
+
                               });
 
-                            },(String errorMsg){
-                              ShowInfo.showInfo(context,content: errorMsg);
-                            });
+                            }else{
+                              print('注册');
+                              httpManage.registCode(accountController.text, codeController.text, pwdController.text, (Map map){
+
+                                int user_id = map['user_id'];
+                                print('user_id = $user_id');
+
+                                String pwdMd5 = MD5Text.convertMD5(pwdController.text);
+
+                                httpManage.loginCode(accountController.text, pwdMd5, (Map map){
+
+                                  UserAccessModel accessModel = map['accessModel'];
+                                  accessModel.userName = accountController.text;
+                                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
+
+                                }, (String errorMsg){
+                                  ShowInfo.showInfo(context,content: errorMsg);
+                                });
+
+                              },(String errorMsg){
+                                ShowInfo.showInfo(context,content: errorMsg);
+                              });
+                            }
+
                           },
                           child: new Container(
                             padding: const EdgeInsets.all(8.0),
@@ -205,12 +229,12 @@ class _RegistSceneState extends State<RegistScene>{
                                 )
                             ),
                             child: new Center(
-                              child: new Text('注册',style: new TextStyle(fontSize: 16.0,color: Colors.black),),
+                              child: new Text(widget.isForegetPwd?'完成':'注册',style: new TextStyle(fontSize: 16.0,color: Colors.black),),
                             ),
                           ),
                         ),
                       ),
-                      new Container(
+                      widget.isForegetPwd?new Container():new Container(
                         padding: const EdgeInsets.only(top: 20.0),
                         child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,

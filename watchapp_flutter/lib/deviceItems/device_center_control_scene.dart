@@ -90,14 +90,22 @@ class _DeviceCenterControlSceneState extends State<DeviceCenterControlScene> wit
             DeviceDetailInfoModel deviceDetailInfoModel = new DeviceDetailInfoModel()
               ..deviceId = deviceIds[i];
 
+
+            String image;
+            if (statusInfoModel.subDeviceId != ''){
+              image = TypeJudgment.judgmentDeviceImage(statusInfoModel.subDeviceId.substring(4,8));
+            }else{
+              image = TypeJudgment.judgmentDeviceImage(statusInfoModel.deviceId.substring(4,8));
+            }
+
             _cell.add(new DeviceSceneCell(
               houseDeviceInfoModel: houseDeviceInfoModel,
               deviceDetailInfoModel: deviceDetailInfoModel,
               statusInfoModel: statusInfoModel,
-              image: new Image(image: const AssetImage('images/testIcon.jpg')),
+              image: new Image(image: new AssetImage(image)),
               isTurnOn: statusInfoModel.subDeviceId.substring(3,4)=='C'?TypeJudgment.judgmentSwitch(statusInfoModel, deviceType[i]):false,
               isNeedSwitch: statusInfoModel.subDeviceId.substring(3,4)=='C',
-              deviceCallback: widget.isMeInfo?null:(String subId){
+              addDeviceCallback: widget.isMeInfo?null:(String subId){
                 if (widget.callback != null)
                   widget.callback(widget.deviceId,subId);
               },

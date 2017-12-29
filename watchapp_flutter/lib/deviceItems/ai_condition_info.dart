@@ -26,11 +26,13 @@ class AiConditionInfo extends StatefulWidget{
 
 class _AiConditionInfoState extends State<AiConditionInfo>{
 
-  List<String> conditionText = <String>[];
-  List<Widget> cells = <Widget>[];
-  List<DecState> states = <DecState>[];
+  List<String> conditionText  = <String>[];
+  List<Widget> cells          = <Widget>[];
+  List<DecState> states       = <DecState>[];
   //条件定义
-  List<ExprInfo> exprInfos = <ExprInfo>[];
+  List<ExprInfo> exprInfos    = <ExprInfo>[];
+  List<String> conditions     = <String>[];
+  List<int> conditionsValue   = <int>[];
   List<SubDeviceInfoModel> subDeviceInfoModels;
 
   void setConditionText(List<SubDeviceInfoModel> models){
@@ -48,6 +50,8 @@ class _AiConditionInfoState extends State<AiConditionInfo>{
         }
         if (isShow){
           conditionText.add(TypeJudgment.judgmentType(v.subDeviceId.substring(4,8)));
+          conditions.add('==');
+          conditionsValue.add(0);
         }
       }
     }
@@ -75,6 +79,8 @@ class _AiConditionInfoState extends State<AiConditionInfo>{
         createCell(i, tmp, '开启', '关闭', tmpList);
       }else if (tmp == '门铃' || tmp == '情景按钮'){
         createCell(i, tmp, '触发', '', tmpList);
+      }else if(tmp == '光感'|| tmp == '温度' || tmp == '湿度'){
+        cells.add(new InductionCell(tmp, i, tmpList, conditions, conditionsValue, states, exprInfos, widget.deviceId));
       }else{
         createCell(i, tmp, '有人', '无人', tmpList);
       }
@@ -82,7 +88,7 @@ class _AiConditionInfoState extends State<AiConditionInfo>{
       i++;
     }
     
-    cells.add(new InductionCell('光感'));
+
 
     setState((){});
   }
@@ -96,15 +102,50 @@ class _AiConditionInfoState extends State<AiConditionInfo>{
       for (var j=0; j<states.length; j++){
         DecState exState = states[j];
         if(exState != DecState.DecNormal){
-          ExprInfo info = new ExprInfo();
-          info.deviceId = widget.deviceId;
-          info.subDeviceId = tmpList[j].subDeviceId;
-          info.class_2 = 1;
-          info.itemType = 1;
-          info.itemIndex = 2;
-          info.expr = '==';
-          info.value = exState==DecState.DecPeople?1:0;
-          exprInfos.add(info);
+
+          if (exState == DecState.DecPeople || exState == DecState.DecNobody){
+            ExprInfo info     = new ExprInfo();
+            info.deviceId     = widget.deviceId;
+            info.subDeviceId  = tmpList[j].subDeviceId;
+            info.class_2      = 1;
+            info.itemType     = 1;
+            info.itemIndex    = 2;
+            info.expr         = '==';
+            info.value        = exState==DecState.DecPeople?1:0;
+            exprInfos.add(info);
+          }else{
+
+            ExprInfo info     = new ExprInfo();
+            if (exState == DecState.DecLight){        //光感
+              info.deviceId     = widget.deviceId;
+              info.subDeviceId  = tmpList[j].subDeviceId;
+              info.class_2      = 1;
+              info.itemType     = 1;
+              info.itemIndex    = 3;
+              info.expr         = conditions[j];
+              info.value        = conditionsValue[j];
+              exprInfos.add(info);
+            }else if (exState == DecState.Dectemperature){  //温度
+              info.deviceId     = widget.deviceId;
+              info.subDeviceId  = tmpList[j].subDeviceId;
+              info.class_2      = 1;
+              info.itemType     = 1;
+              info.itemIndex    = 3;
+              info.expr         = conditions[j];
+              info.value        = conditionsValue[j]*10;
+              exprInfos.add(info);
+            }else if (exState == DecState.DecHumidity){   //湿度
+              info.deviceId     = widget.deviceId;
+              info.subDeviceId  = tmpList[j].subDeviceId;
+              info.class_2      = 1;
+              info.itemType     = 1;
+              info.itemIndex    = 4;
+              info.expr         = conditions[j];
+              info.value        = conditionsValue[j]*100;
+              exprInfos.add(info);
+            }
+          }
+
         }
       }
 
@@ -149,6 +190,9 @@ enum DecState{
   DecNormal,    //探测器默认状态
   DecPeople,    //有人状态 （开启）
   DecNobody,    //无人状态 （关闭）
+  DecLight,     //探测器状态(光感)
+  Dectemperature, //温度
+  DecHumidity,    //湿度
 }
 
 class DecCell extends StatefulWidget{
@@ -246,9 +290,26 @@ class _DecCellState extends State<DecCell>{
 
 class InductionCell extends StatefulWidget{
   
-  InductionCell(this.decName);
+  InductionCell(
+      this.decName,
+      this.i,
+      this.tmpList,
+      this.conditions,
+      this.conditionsValue,
+      this.states,
+      this.exprInfos,
+      this.deviceId
+      );
   
   final String decName;
+  final int i;
+  final List<SubDeviceInfoModel> tmpList;
+  final List<String> conditions;
+  final List<int>    conditionsValue;
+  final List<DecState> states;
+  List<ExprInfo> exprInfos;
+  final String deviceId;
+
   
   @override
   _InductionCellState createState() => new _InductionCellState();
@@ -261,6 +322,63 @@ class _InductionCellState extends State<InductionCell>{
 
   @override
   Widget build(BuildContext context){
+
+    void change(DecState state, int index){
+      widget.states[index] = state;
+      widget.exprInfos = <ExprInfo>[];
+
+      for (var j=0; j<widget.states.length; j++){
+        DecState exState = widget.states[j];
+        if(exState != DecState.DecNormal){
+
+          if (exState == DecState.DecPeople || exState == DecState.DecNobody){
+            ExprInfo info     = new ExprInfo();
+            info.deviceId     = widget.deviceId;
+            info.subDeviceId  = widget.tmpList[j].subDeviceId;
+            info.class_2      = 1;
+            info.itemType     = 1;
+            info.itemIndex    = 2;
+            info.expr         = '==';
+            info.value        = exState==DecState.DecPeople?1:0;
+            widget.exprInfos.add(info);
+          }else{
+
+            ExprInfo info     = new ExprInfo();
+            if (exState == DecState.DecLight){        //光感
+              info.deviceId     = widget.deviceId;
+              info.subDeviceId  = widget.tmpList[j].subDeviceId;
+              info.class_2      = 1;
+              info.itemType     = 1;
+              info.itemIndex    = 3;
+              info.expr         = widget.conditions[j];
+              info.value        = widget.conditionsValue[j];
+              widget.exprInfos.add(info);
+            }else if (exState == DecState.Dectemperature){  //温度
+              info.deviceId     = widget.deviceId;
+              info.subDeviceId  = widget.tmpList[j].subDeviceId;
+              info.class_2      = 1;
+              info.itemType     = 1;
+              info.itemIndex    = 3;
+              info.expr         = widget.conditions[j];
+              info.value        = widget.conditionsValue[j]*10;
+              widget.exprInfos.add(info);
+            }else if (exState == DecState.DecHumidity){   //湿度
+              info.deviceId     = widget.deviceId;
+              info.subDeviceId  = widget.tmpList[j].subDeviceId;
+              info.class_2      = 1;
+              info.itemType     = 1;
+              info.itemIndex    = 4;
+              info.expr         = widget.conditions[j];
+              info.value        = widget.conditionsValue[j]*100;
+              widget.exprInfos.add(info);
+            }
+          }
+
+        }
+      }
+    }
+
+
     return new Container(
         color: const Color.fromRGBO(214, 214, 214, 1.0),
         padding: const EdgeInsets.only(bottom: 1.0),
@@ -285,6 +403,16 @@ class _InductionCellState extends State<InductionCell>{
                   ],
                   onSelected: (String onValue){
                     conditionFormula = onValue;
+                    widget.conditions[widget.i] = conditionFormula;
+
+                    if (widget.decName == '光感'){
+                      change(DecState.DecLight, widget.i);
+                    }else if (widget.decName == '温度'){
+                      change(DecState.Dectemperature, widget.i);
+                    }else if (widget.decName == '湿度'){
+                      change(DecState.DecHumidity, widget.i);
+                    }
+
                     setState((){});
                   },
                   child: new Text(conditionFormula, style: new TextStyle(fontSize: 18.0),),),
@@ -303,6 +431,16 @@ class _InductionCellState extends State<InductionCell>{
                           onChanged: (String value){
                             if (value.length > 3){
                               conditionNumController.text = value;
+                              widget.conditions[widget.i] = conditionFormula;
+                              widget.conditionsValue[widget.i] = int.parse(value);
+
+                              if (widget.decName == '光感'){
+                                change(DecState.DecLight, widget.i);
+                              }else if (widget.decName == '温度'){
+                                change(DecState.Dectemperature, widget.i);
+                              }else if (widget.decName == '湿度'){
+                                change(DecState.DecHumidity, widget.i);
+                              }
                             }
                           },
                         ),

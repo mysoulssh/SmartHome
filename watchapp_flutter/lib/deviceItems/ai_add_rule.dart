@@ -70,7 +70,7 @@ class _AiAddRuleState extends State<AiAddRule>{
         AiAddRuleCell ruleCell = new AiAddRuleCell(
           text1: text1,
           text2: text2,
-          text3: '持续10\'10\'',
+          text3: '一直持续',
           deviceRuleType: ruleType,
           controlCallback: (){
             switch (ruleType){
@@ -182,20 +182,34 @@ class _AiAddRuleState extends State<AiAddRule>{
     if (widget.ruleInfo.exprs != null){
       for (var v in widget.ruleInfo.exprs){
 
-        String devName = TypeJudgment.judgmentType(v.subDeviceId != null||v.subDeviceId != ''?v.subDeviceId.substring(4,8):v.deviceId.substring(4,8));
+        if (v.deviceId == '' && v.subDeviceId == ''){   //时间
 
-        String openStr = '有人';
-        String closeStr = '无人';
+          int startHours = (v.startTime~/3600).toInt();
+          int startMins  = (v.startTime%3600~/60).toInt();
 
-        if (devName == '门磁'){
-          openStr = '打开';
-          closeStr = '关闭';
-        }else if (devName == '门铃' || devName == '情景按钮'){
-          openStr = '触发';
-          closeStr = '';
+          int endHours = (v.endTime~/3600).toInt();
+          int endMins  = (v.endTime%3600~/60).toInt();
+
+          conditionList.add(createDecCondition('时间', true, '$startHours:$startMins 至 $endHours:$endMins', ''));
+
+          decNameList.add('时间');
+        }else{                                          //事件
+          String devName = TypeJudgment.judgmentType(v.subDeviceId != null||v.subDeviceId != ''?v.subDeviceId.substring(4,8):v.deviceId.substring(4,8));
+
+          String openStr = '有人';
+          String closeStr = '无人';
+
+          if (devName == '门磁'){
+            openStr = '打开';
+            closeStr = '关闭';
+          }else if (devName == '门铃' || devName == '情景按钮'){
+            openStr = '触发';
+            closeStr = '';
+          }
+
+          conditionList.add(createDecCondition(devName, v.value==1, openStr, closeStr));
+          decNameList.add(devName);
         }
-
-        conditionList.add(createDecCondition(devName, v.value==1, openStr, closeStr));
         insetIndex ++;
       }
     }
@@ -230,23 +244,24 @@ class _AiAddRuleState extends State<AiAddRule>{
 
                 conditionList.insert(insetIndex, createDecCondition(conditionTextList[i], state==DecState.DecPeople?true:false, openStr, closeStr));
                 insetIndex++;
-                setState((){});
+
               }
             }
+
+            setState((){});
 
             for (String tmp in tmpList){
               conditionTextList.remove(tmp);
             }
           }else if (type == ConditonType.ConditionTime){
 
-            int startHour   = (exprInfos.first.startTime/3600).toInt();
-            int startMinute = (exprInfos.first.startTime%3600/60).toInt();
+            int startHour   = (exprInfos.first.startTime~/3600).toInt();
+            int startMinute = (exprInfos.first.startTime%3600~/60).toInt();
 
-            int endHour   = (exprInfos.first.endTime/3600).toInt();
-            int endMinute = (exprInfos.first.endTime%3600/60).toInt();
+            int endHour   = (exprInfos.first.endTime~/3600).toInt();
+            int endMinute = (exprInfos.first.endTime%3600~/60).toInt();
 
             conditionList.insert(insetIndex, createDecCondition('时间', true, '$startHour:$startMinute 至 $endHour:$endMinute', ''));
-            insetIndex++;
             setState((){});
             Navigator.of(context).pop();
           }
@@ -339,6 +354,17 @@ class _AiAddRuleState extends State<AiAddRule>{
     );
   }
 
+  void resetConditionRuleCell(){
+    for(var v in ruleActionCell){
+      conditionList.removeLast();
+    }
+
+    for(var v in ruleActionCell){
+      conditionList.add(v);
+    }
+    setState((){});
+  }
+
   @override
   Widget build(BuildContext context){
     return new Column(
@@ -401,10 +427,11 @@ class _AiAddRuleState extends State<AiAddRule>{
 
                   String typeStr = TypeJudgment.judgmentType(subDeviceInfoModel.subDeviceId.substring(4,8));
                   String tmpStr = '关闭';
-                  ruleActionCell.add(new AiAddRuleCell(
+
+                  AiAddRuleCell ruleCell = new AiAddRuleCell(
                     text1: typeStr,
                     text2: tmpStr,
-                    text3: '持续10\'10\'',
+                    text3: '一直持续',
                     deviceRuleType: TypeJudgment.judgmentDeviceRuleType(subDeviceInfoModel.subDeviceId.substring(4,8)),
                     subDeviceInfoModel: subDeviceInfoModel,
                     statusInfoModel: statusInfoModel,
@@ -444,18 +471,18 @@ class _AiAddRuleState extends State<AiAddRule>{
                           {
                             AiSwitchScene switchScene = new AiSwitchScene(isSwitchOn: statusInfoModel.online==1, callback: (bool isOpen){
                               SIOTCMD cmd = new SIOTCMD()
-                              ..deviceId = model.deviceId
-                              ..subDeviceId = subDeviceInfoModel.subDeviceId
-                              ..cmdid = 201
-                              ..argInt32.add(isOpen?1:0);
+                                ..deviceId = model.deviceId
+                                ..subDeviceId = subDeviceInfoModel.subDeviceId
+                                ..cmdid = 201
+                                ..argInt32.add(isOpen?1:0);
 
                               rhsInfo.actionType = 1;
                               rhsInfo.cmd = cmd;
 
+                              tmpStr = cmd.argInt32.first == 1?'开启':'关闭';
 
-                              setState((){
-                                tmpStr = cmd.argInt32.first == 1?'开启':'关闭';
-                              });
+                              resetConditionRuleCell();
+
                             },);
                             Navigator.of(context).push(new MaterialPageRoute(
                                 builder: (BuildContext context) => new NavigationBar(switchScene, typeStr,
@@ -473,10 +500,12 @@ class _AiAddRuleState extends State<AiAddRule>{
                     },
                     timeCallback: (){
                       showTimePicker(context: context, initialTime: new TimeOfDay.fromDateTime(new DateTime.now())).then((TimeOfDay value){
-
+                        resetConditionRuleCell();
                       });
                     },
-                  ));
+                  );
+
+                  ruleActionCell.add(ruleCell);
                   if (ruleActionCell.length == 1){
                     conditionList.removeLast();
                   }

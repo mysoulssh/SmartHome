@@ -9,6 +9,7 @@ import 'package:watchapp_flutter/grpc_src/dart_out/DeviceStatusGet/DeviceStatusG
 import 'package:watchapp_flutter/deviceItems/models/status_info_model.dart';
 import 'package:watchapp_flutter/deviceItems/device_center_control_scene.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
+import 'package:watchapp_flutter/Tools/type_judgment.dart';
 
 
 enum EnterType{
@@ -52,7 +53,7 @@ class _DeviceSceneState extends State<DeviceScene>{
   }
 
   void loadList(){
-    httpManage.userDeviceList(UserAccessModel.accessModel.accessToken, 1, 20, (Map map){
+    httpManage.userDeviceList(UserAccessModel.accessModel.accessToken, 1, 40, (Map map){
       _cell.removeRange(0, _cell.length);
       List<DeviceInfoModel> models = map['models'];
 
@@ -85,21 +86,20 @@ class _DeviceSceneState extends State<DeviceScene>{
               DeviceDetailInfoModel detailInfo = infoModels[i];
               StatusInfoModel statusInfo       = status[i];
 
+              String image = TypeJudgment.judgmentDeviceImage(detailInfo.prodtCode.first);
+
               _cell.add(new DeviceSceneCell(
                 deviceInfoModel: deviceInfo,
                 deviceDetailInfoModel: detailInfo,
                 statusInfoModel: statusInfo,
-                image: new Image(image: const AssetImage('images/testIcon.jpg')),
+                image: new Image(image: new AssetImage(image)),
                 isTurnOn: false,
                 isNeedSwitch: detailInfo.prodtCode.first != 'YHUB',
-                deviceCallback: widget.type==EnterType.typeDevice?(String id){
+                addDeviceCallback: widget.type==EnterType.typeDevice?(String id){
                   widget.callback(id,'');
                   Navigator.of(context).pop();
                 }:null,
-                callback: (String deviceId, String subId){
-                  delDevice(deviceId);
-                },
-                controlCallback: detailInfo.prodtCode.first == 'YHUB'?(){
+                centerControlCallback: detailInfo.prodtCode.first == 'YHUB'?(){
                   DeviceCenterControlScene controlScene = new DeviceCenterControlScene(deviceInfo.deviceId, (String deviceId, String subId){
                     if (widget.type == EnterType.typeDevice){
                       widget.callback(deviceId,subId);
@@ -113,6 +113,11 @@ class _DeviceSceneState extends State<DeviceScene>{
                     deviceInfo.deviceName,
                   )));
                 }:null,
+                deleteCallback: (onValue){
+                  DeviceSceneCell tmp = onValue;
+                  _cell.remove(onValue);
+                  delDevice(tmp.statusInfoModel.deviceId);
+                },
               ));
             }
 
@@ -126,6 +131,7 @@ class _DeviceSceneState extends State<DeviceScene>{
         });
       }else
       {
+        setState((){});
         return;
       }
 
@@ -137,7 +143,6 @@ class _DeviceSceneState extends State<DeviceScene>{
   void delDevice(String deviceId){
     httpManage.userDeviceDel(UserAccessModel.accessModel.accessToken, deviceId, (Map map){
       print('删除成功');
-      loadList();
     }, (String errorMsg){
 
     });

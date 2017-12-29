@@ -5,9 +5,13 @@ import 'package:watchapp_flutter/Tools/http_manage.dart';
 import 'package:watchapp_flutter/Tools/user_access_model.dart';
 
 import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+import 'models/user_info_model.dart';
 
 class MeChangePhoneScene extends StatefulWidget{
 
+  MeChangePhoneScene(this.userInfoModel);
+
+  final UserInfoModel userInfoModel;
 
   @override
   _MeChangePhoneSceneState createState() => new _MeChangePhoneSceneState();
@@ -25,7 +29,7 @@ class _MeChangePhoneSceneState extends State<MeChangePhoneScene> with TickerProv
   void initState(){
     super.initState();
 
-    oldPhoneController.text = '12345678901';
+    oldPhoneController.text = widget.userInfoModel.user_name;
   }
 
   bool shouldChangePhone(){

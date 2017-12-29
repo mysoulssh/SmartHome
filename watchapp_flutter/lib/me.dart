@@ -16,6 +16,7 @@ import 'package:watchapp_flutter/Tools/user_access_model.dart';
 import 'package:watchapp_flutter/Tools/http_manage.dart';
 import 'meItems/models/user_info_model.dart';
 import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+import 'package:watchapp_flutter/grpc_src/dart_out/RelationList/RelationList.pb.dart';
 
 class MineItem extends StatefulWidget {
   @override
@@ -24,24 +25,43 @@ class MineItem extends StatefulWidget {
 
 class _MineItemState extends State<MineItem> {
 
-  String likeName = '来去之间';
+  UserInfoModel userInfoModel = new UserInfoModel()
+  ..user_name = ''
+  ..like_name = '';
+
+  List<RelationInfo> relationList = <RelationInfo>[];
 
   @override
   void initState(){
     super.initState();
     //获取个人数据
-    httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, UserAccessModel.accessModel.userName, (Map map){
+    httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, [UserAccessModel.accessModel.userName], (Map map){
 
-      UserInfoModel infoModel = map['UserInfoModel'];
-      String liName = infoModel.like_name;
-      likeName = '$liName';
+      List<UserInfoModel> models = map['models'];
+
+      UserInfoModel infoModel = models.first;
+      userInfoModel = infoModel;
       setState((){});
 
     }, (String errorMsg){
       ShowInfo.showInfo(context,content: errorMsg);
     });
 
+    getRelationList();
+
   }
+
+  void getRelationList(){
+    httpManage.relationList(UserAccessModel.accessModel.accessToken, 1, 20, 0, (Map map){
+      List<RelationInfo> infoList = map['models'];
+      print('RelationInfoList = $infoList');
+      relationList = infoList;
+      setState((){});
+    }, (String errorMsg){
+
+    });
+  }
+
 
   Widget _createItems(String image,String text,int tag){
     return new GestureDetector(
@@ -68,14 +88,14 @@ class _MineItemState extends State<MineItem> {
         print('$tag 被点击');
         switch (tag){
           case 0:{
-            MeMemberScene memberScene = new MeMemberScene();
+            MeMemberScene memberScene = new MeMemberScene(relationList);
             Navigator.of(context).push(new MaterialPageRoute(
                 builder: (BuildContext context) => new NavigationBar(memberScene, '我的家人',
                   actions: <Widget>[
                     new GestureDetector(
                       onTap: (){
                         //添加家人
-                        MeAddMemberScene addMemberScene = new MeAddMemberScene();
+                        MeAddMemberScene addMemberScene = new MeAddMemberScene(relationList);
                         Navigator.of(context).push(new MaterialPageRoute(
                             builder: (BuildContext context) => new NavigationBar(addMemberScene, '我的家人',
                               actions: <Widget>[
@@ -174,7 +194,7 @@ class _MineItemState extends State<MineItem> {
           }
           break;
           case 4:{        //我的手机
-            MeChangePhoneScene phoneScene = new MeChangePhoneScene();
+            MeChangePhoneScene phoneScene = new MeChangePhoneScene(userInfoModel);
             Navigator.of(context).push(new MaterialPageRoute(
                 builder: (BuildContext context) => new NavigationBar(phoneScene, '我的手机'))
             );
@@ -210,7 +230,7 @@ class _MineItemState extends State<MineItem> {
         new GestureDetector(
           onTap: (){
             print('ListTile被点击');
-            MeInfoScene infoScene = new MeInfoScene();
+            MeInfoScene infoScene = new MeInfoScene(userInfoModel);
             Navigator.of(context).push(new MaterialPageRoute(
                 builder: (BuildContext context) => new NavigationBar(infoScene, '个人信息'))
             );
@@ -236,11 +256,11 @@ class _MineItemState extends State<MineItem> {
                     children: <Widget>[
                       new Padding(
                         padding: const EdgeInsets.only(bottom: 5.0),
-                        child: new Text(likeName,style: new TextStyle(fontSize: 16.0),),
+                        child: new Text(userInfoModel.like_name,style: new TextStyle(fontSize: 16.0),),
                       ),
                       new Padding(
                         padding: const EdgeInsets.only(bottom: 0.0),
-                        child: new Text('陈亦度',style: new TextStyle(fontSize: 14.0)),
+                        child: new Text(userInfoModel.user_name,style: new TextStyle(fontSize: 14.0)),
                       )
                     ],
                   ),
@@ -269,7 +289,7 @@ class _MineItemState extends State<MineItem> {
         _createCell('icon_message.png', '消息接收', 3, 1.0),
         _createCell('icon_phone.png', '我的手机', 4, 1.0),
         _createCell('icon_lock.png', '修改密码', 5, 1.0),
-        _createCell('icon_about_us.png', '关于我们', 6, 20.0),
+//        _createCell('icon_about_us.png', '关于我们', 6, 20.0),
 
       ],
     );

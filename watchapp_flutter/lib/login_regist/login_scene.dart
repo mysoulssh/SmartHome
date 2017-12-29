@@ -6,6 +6,8 @@ import 'package:watchapp_flutter/Tools/md5_text.dart';
 import 'package:watchapp_flutter/Tools/user_access_model.dart';
 import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
 import 'package:watchapp_flutter/meItems/models/house_info_model.dart';
+import 'dart:io';
+import 'dart:async';
 
 
 class LoginScene extends StatefulWidget{
@@ -16,12 +18,35 @@ class LoginScene extends StatefulWidget{
 class _LoginSceneState extends State<LoginScene>{
   final TextEditingController accountController = new TextEditingController();
   final TextEditingController pwdController     = new TextEditingController();
-
   var edgeLeftAndRight = 40.0;
-
   bool isRemenberPwd = true;
-
   var loginAllEdge = new EdgeInsets.all(8.0);
+
+
+  @override
+  void initState(){
+    super.initState();
+
+
+    try {
+      var dir = Directory.systemTemp.path;
+      new File('${dir}/account.txt').exists().then((bool onValue){
+        if (onValue == true){
+          _readLoaclFile().then((List<String> contents){
+            if (contents.length > 1){
+              accountController.text = contents[0];
+              pwdController.text = contents[1];
+            }
+          });
+        }
+      });
+    }catch (e){
+      return;
+    }
+
+  }
+
+
 
   bool checkShouldLogin(){
     bool shouldLogin = true;
@@ -36,6 +61,25 @@ class _LoginSceneState extends State<LoginScene>{
 
     return shouldLogin;
   }
+
+  //读取文件
+  Future<List<String>> _readLoaclFile() async{
+    var dir = Directory.systemTemp.path;
+    return await new File('${dir}/account.txt').readAsLines();
+  }
+
+  //创建文件
+  Future<File> _createFile() async{
+    var dir = Directory.systemTemp.path;
+    return await new File('$dir/account.txt').create(recursive: true);
+  }
+
+  //写入文件
+  Future<File> _wirteStringToFile(String contents) async {
+    var dir = Directory.systemTemp.path;
+    return await new File('$dir/account.txt').writeAsString(contents);
+  }
+
 
   @override
   Widget build(BuildContext context){
@@ -136,6 +180,14 @@ class _LoginSceneState extends State<LoginScene>{
                                   child: new GestureDetector(
                                     onTap: (){
                                       print('忘记密码');
+
+                                      RegistScene registScene = new RegistScene((int user_id){
+                                        Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
+                                      },true);
+                                      Navigator.of(context).push(new MaterialPageRoute(
+                                        builder: (BuildContext context) => registScene,
+                                      ));
+
                                     },
                                     child: new Text('忘记密码',style: new TextStyle(fontSize: 15.0,color: Colors.black)),
                                   ),
@@ -158,6 +210,23 @@ class _LoginSceneState extends State<LoginScene>{
                                   UserAccessModel accessModel = map['accessModel'];
                                   accessModel.userName = accountController.text;
 
+                                  if (isRemenberPwd){
+                                    try{
+                                      _createFile().then((File file){
+                                        _wirteStringToFile('${accountController.text}\n${pwdController.text}');
+                                      });
+                                    }catch (e){
+                                      print('记住密码失败：$e');
+                                    }
+                                  }else{
+                                    var dir = Directory.systemTemp.path;
+                                    new File('$dir/account.txt').exists().then((bool onValue){
+                                      if (onValue == true){
+                                        new File('$dir/account.txt').delete();
+                                      }
+                                    });
+                                  }
+
                                   httpManage.houseList(UserAccessModel.accessModel.accessToken, '', (Map map){
                                     Navigator.of(context).pop();
 
@@ -171,6 +240,8 @@ class _LoginSceneState extends State<LoginScene>{
                                     print('$errorMsg');
                                   });
 //18200550780
+//13543212345
+//13654321234
                                 }, (String errorMsg){
                                   Navigator.of(context).pop();
 
@@ -204,7 +275,7 @@ class _LoginSceneState extends State<LoginScene>{
 
                                 RegistScene registScene = new RegistScene((int user_id){
                                   Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new WatchApp()));
-                                });
+                                },false);
                                 Navigator.of(context).push(new MaterialPageRoute(
                                   builder: (BuildContext context) => registScene,
                                 ));

@@ -15,21 +15,37 @@ typedef CellSelectCallback(int index);
 
 class MeInfoScene extends StatefulWidget{
 
+  MeInfoScene(this.userInfoModel);
+
+  UserInfoModel userInfoModel;
+
   @override
   _MeInfoSceneState createState() => new _MeInfoSceneState();
 }
 
 class _MeInfoSceneState extends State<MeInfoScene>{
 
-  List<String> infoList = <String>['我的昵称', '我的小区', '性别', '出生日期', '身高', '体重', '运动目标', '身份认证',];
-  List<String> contentList = <String>['来去之间', '孵化园', '男', '1999年9月9日', '178', '60', '10000', '未认证',];
+  List<String> infoList = <String>['我的昵称', '我的小区', '性别', '出生日期', '身高', '体重', '运动目标',];
+  List<String> contentList = <String>[
+    '',           //昵称
+    '',           //地点
+    '',           //性别
+    '',           //出生日期
+    '',           //身高
+    '',           //体重
+    '',           //运动目标
+    '',           //是否认证
+  ];
   List<Widget> infoSceneList = <Widget>[];
 
   final TextEditingController likeNameController = new TextEditingController();
-  final TextEditingController heightController = new TextEditingController();
-  final TextEditingController weightController = new TextEditingController();
-  final TextEditingController stepController = new TextEditingController();
-  final TextEditingController sexController = new TextEditingController();
+  final TextEditingController siteControrller    = new TextEditingController();
+  final TextEditingController heightController   = new TextEditingController();
+  final TextEditingController weightController   = new TextEditingController();
+  final TextEditingController stepController     = new TextEditingController();
+  final TextEditingController sexController      = new TextEditingController();
+
+  Image iconImage;
 
   String imagePath = 'images/testIcon.jpg';
 
@@ -37,18 +53,24 @@ class _MeInfoSceneState extends State<MeInfoScene>{
   void initState(){
     super.initState();
 
-    initList();
-
-    userInfoGet();
-  }
-
-  void userInfoGet(){
-    httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, UserAccessModel.accessModel.userName, (Map map){
-      UserInfoModel infoModel = map['UserInfoModel'];
-      print('$infoModel');
-    }, (String errorMsg){
-      print('个人详情错误信息：$errorMsg');
+    var imageDir = Directory.systemTemp.path;
+    new File('$imageDir/iconImage.txt').exists().then((onValue){
+      if (onValue){
+        new File('$imageDir/iconImage.txt').readAsString().then((onValue){
+          iconImage = new Image.file(
+            new File(onValue),
+            width: 100.0,
+            height: 100.0,
+          );
+        });
+      }
     });
+
+    if (iconImage == null){
+      iconImage = new Image(image: new AssetImage('images/testIcon.jpg'));
+    }
+
+    initList();
   }
 
 
@@ -57,11 +79,24 @@ class _MeInfoSceneState extends State<MeInfoScene>{
     var tmp = new Attr()
       ..itemId = item_id
       ..itemVstring = valueString==null?'':valueString
-      ..itemVint32 = valueInt;
+      ..itemVint32 = valueInt==null?0:valueInt;
     int tmpNum = tmp.itemVint32;
     print('$tmpNum');
     List<Attr> attr = <Attr>[tmp];
     httpManage.setUserInfo(UserAccessModel.accessModel.accessToken, UserAccessModel.accessModel.userName, attr, (Map map){
+
+      print('设置性别成功');
+
+      httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, [UserAccessModel.accessModel.userName], (Map map){
+
+        List<UserInfoModel> models = map['models'];
+
+        widget.userInfoModel = models.first;
+        reloadList();
+
+      }, (String errorMsg){
+        Navigator.of(context).pop();
+      });
 
     },(String errorMsg){
       ShowInfo.showInfo(context,content: errorMsg);
@@ -71,18 +106,43 @@ class _MeInfoSceneState extends State<MeInfoScene>{
   void reloadList(){
     infoSceneList.removeRange(0, infoSceneList.length);
 
-    setState((){
-      initList();
-    });
+    initList();
+
+    setState((){});
   }
 
   void initList(){
+    contentList.removeRange(0, contentList.length);
+
+    String likeName = widget.userInfoModel.like_name==''?'':widget.userInfoModel.like_name;
+    String siteName = widget.userInfoModel.site_name==''?'未设置':widget.userInfoModel.site_name;
+    String sex      = widget.userInfoModel.sex==0?'未设置':(widget.userInfoModel.sex==1?'男':'女');
+    String year     = widget.userInfoModel.birth_year?.toString();
+    String month    = widget.userInfoModel.birth_month?.toString();
+    String day      = widget.userInfoModel.birth_day?.toString();
+    String birthday = year=='0'?'未设置':'$year年$month月$day日';
+    String height   = widget.userInfoModel.height?.toString();
+    String weight   = widget.userInfoModel.weight?.toString();
+    String target   = widget.userInfoModel.target_step?.toString();
+    String sign     = widget.userInfoModel.card_id==''?'未认证':'已认证';
+
+    contentList.add(likeName);
+    contentList.add(siteName);
+    contentList.add(sex);
+    contentList.add(birthday);
+    contentList.add(height);
+    contentList.add(weight);
+    contentList.add(target);
+    contentList.add(sign);
+
     for(int i=0; i<infoList.length; i++){
 
       infoSceneList.add(createCell(infoList[i], i, contentList[i], 'cm', (int index){
         print('$index');
         if(index == 7){
           identify();
+        }else if(index == 1){
+          changeDialog('我的小区', index, '请输入小区名', siteControrller);
         }else if (index == 2){
           selectSex();
         }else if (index == 3){
@@ -117,6 +177,22 @@ class _MeInfoSceneState extends State<MeInfoScene>{
           switch (index){
             case 0:{    //昵称设置
               setInfo(4, valueString: likeNameController.text);
+            }
+            break;
+            case 1:{    //设置小区（成都市）
+              httpManage.userAddrSet(UserAccessModel.accessModel.accessToken, siteControrller.text, 3067000, 10406000, (Map map){
+                print('设置小区成功');
+                httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, [UserAccessModel.accessModel.userName], (Map map){
+                  List<UserInfoModel> models = map['models'];
+                  widget.userInfoModel = models.first;
+                  reloadList();
+
+                }, (String errorMsg){
+                  Navigator.of(context).pop();
+                });
+              }, (String errorMsg){
+
+              });
             }
             break;
             case 4:{    //身高
@@ -235,12 +311,7 @@ class _MeInfoSceneState extends State<MeInfoScene>{
   //性别修改
   void changeSex(String text, int index, TextEditingController controller){
     Navigator.of(context).pop();
-
-    contentList[index] = controller.text;
-    reloadList();
-
     setInfo(14, valueInt: index);
-
   }
 
   void showDate(int index){
@@ -252,9 +323,9 @@ class _MeInfoSceneState extends State<MeInfoScene>{
         .then((DateTime value){
       if (value == null) return;
 
-      var year  = value.year;
-      var month = value.month;
-      var day   = value.day;
+      showDialog(context: context, child: new Center(
+        child: new CircularProgressIndicator(),
+      ));
 
       var attrYear = new Attr();
       attrYear.itemId = 11;
@@ -270,23 +341,47 @@ class _MeInfoSceneState extends State<MeInfoScene>{
 
       List<Attr> attr = <Attr>[attrYear,attrMonth,attrDay];
       httpManage.setUserInfo(UserAccessModel.accessModel.accessToken, UserAccessModel.accessModel.userName, attr, (Map map){
+        print('设置出生日期成功');
+
+        httpManage.getUserInfo(UserAccessModel.accessModel.accessToken, [UserAccessModel.accessModel.userName], (Map map){
+          Navigator.of(context).pop();
+
+          List<UserInfoModel> models = map['models'];
+          widget.userInfoModel = models.first;
+
+          reloadList();
+        }, (String errorMsg){
+          Navigator.of(context).pop();
+        });
 
       },(String errorMsg){
+        Navigator.of(context).pop();
         ShowInfo.showInfo(context,content: errorMsg);
       });
 
-      
-      contentList[index]  = '$year'+'年'+'$month'+'月'+'$day'+'日';
-      reloadList();
+
     });
   }
   
   Widget createHeader(){
+
     return  new Container(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: new GestureDetector(
         onTap: (){
           ImagePicker.pickImage().then((File value){
+            iconImage = new Image.file(
+              value,
+              height: 100.0,
+              width: 100.0,
+            );
+
+            var path = Directory.systemTemp.path;
+            new File('$path/iconImage.txt').create(recursive: true).then((onValue){
+              onValue.writeAsString(path);
+            });
+
+            setState((){});
 
           });
         },
@@ -302,7 +397,8 @@ class _MeInfoSceneState extends State<MeInfoScene>{
                 padding: const EdgeInsets.fromLTRB(0.0, 8.0, 15.0, 8.0),
                 child: new CircleAvatar(
                   radius: 28.0,
-                  backgroundImage: new AssetImage(imagePath),
+//                  backgroundImage: new AssetImage(imagePath),
+                  backgroundImage: iconImage.image,
                 ),
               ),
               new Container(
@@ -327,6 +423,14 @@ class _MeInfoSceneState extends State<MeInfoScene>{
       child: new GestureDetector(
         onTap: (){
           print('退出登录');
+
+          var dir = Directory.systemTemp.path;
+          new File('$dir/account.txt').exists().then((bool onValue){
+            if (onValue == true){
+              new File('$dir/account.txt').delete();
+            }
+          });
+
           Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => new LoginScene()));
         },
         child: new Container(

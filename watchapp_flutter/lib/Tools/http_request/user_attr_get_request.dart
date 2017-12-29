@@ -34,6 +34,7 @@ class UserInfoGetRequest {
       rpcRequest.userName.add(v);
     }
 
+
     List<UserInfoModel> models = <UserInfoModel>[];
 
     try{
@@ -60,10 +61,10 @@ class UserInfoGetRequest {
         infoModel.company_code = attr.companyCode;
         infoModel.site_name = attr.siteName;
         infoModel.target_step = attr.targetStep;
-
+        
         models.add(infoModel);
       }
-
+      
     }catch(e){
       String error = e.message;
       List<String> errorList = error.split(',');

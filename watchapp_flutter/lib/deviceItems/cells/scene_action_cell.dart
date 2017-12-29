@@ -42,7 +42,10 @@ class _ActionSceneCellState extends State<ActionSceneCell>{
                 child: new SizedBox(
                   width: 64.0,
                   height: 64.0,
-                  child: widget.image,
+                  child: new Container(
+                    padding: const EdgeInsets.all(8.0),
+                    child: widget.image,
+                  ),
                 ),
               ),
               new Expanded(child: new Container(

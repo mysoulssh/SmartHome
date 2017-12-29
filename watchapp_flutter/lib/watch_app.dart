@@ -15,6 +15,7 @@ import 'package:watchapp_flutter/Tools/http_manage.dart';
 import 'package:watchapp_flutter/Tools/user_access_model.dart';
 import 'meItems/models/house_info_model.dart';
 import 'grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
+import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
 
 enum AddSceneBtnType{
   AddDevice,   //添加设备
@@ -361,7 +362,9 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
                         }
                       }
                       var tmpv = ruleInfo.exprs;
-                      print('$tmpv');
+                      for (var v in tmpv){
+                        print('$v\n');
+                      }
 
                       onlyTime?ruleInfo.onlyTime = 1:ruleInfo.onlyTime = 2;
 
@@ -381,12 +384,16 @@ class _WatchAppState extends State<WatchApp> with TickerProviderStateMixin{
                             String etId = map['etId'];
                             print('etId = $etId');
                             setState((){});
+
+                            Navigator.of(context).pop();
                           },
                           (String errorMsg){
                             print('error: $errorMsg');
+
+                            ShowInfo.showInfo(context,content: errorMsg);
                           });
 
-                      Navigator.of(context).pop();
+
                     })
                   ],))
             );

@@ -63,8 +63,15 @@ import 'http_request/scene_active_request.dart';
 import 'http_request/house_device_list.dart';
 import 'http_request/house_area_device_del_request.dart';
 import 'http_request/house_area_device_set_requset.dart';
+import 'http_request/user_lost_pass_request.dart';
+import 'http_request/user_addr_set_request.dart';
 import 'http_request/user_phone_change.dart';
 import 'http_request/user_change_pass.dart';
+import 'http_request/user_frs_add_request.dart';
+import 'http_request/user_frs_list_request.dart';
+import 'http_request/user_frs_confirm_request.dart';
+import 'http_request/user_frs_del_request.dart';
+import 'http_request/relation_list_request.dart';
 
 
 typedef SuccessCallback(Map map);
@@ -158,8 +165,24 @@ class HttpManage{
 
   }
 
+  //找回密码
+  void userLostPass(String userName, String newPass, String vcode, SuccessCallback callback, UserLostPassFailureCallback failureCallback){
+    UserLostPassRequest request = new UserLostPassRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),
+    );
+
+    request.userLostPass(userName, newPass, vcode, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
   //获取个人信息
-  void getUserInfo(String accessToken, String userName, SuccessCallback callback,InfoGetFailureCallback failureCallback){
+  void getUserInfo(String accessToken, List<String> userName, SuccessCallback callback,InfoGetFailureCallback failureCallback){
     UserInfoGetRequest request = new UserInfoGetRequest(shareChannel(),
       clientId: clientId,
       reqTime: _getReqTime(),
@@ -169,7 +192,7 @@ class HttpManage{
     request.infoGet(accessToken, userName, failureCallback).then((onValue){
       if (onValue == null) return;
       callback({
-        'UserInfoModel':onValue
+        'models':onValue
       });
     });
   }
@@ -587,16 +610,16 @@ class HttpManage{
   }
 
   //用戶获取设备的版本号
-  void deviceVerGet(String accessToken, List<QueryInfo> query, SuccessCallback callback, DeviceVerGetFailureCallback failureCallback){
+  void deviceVerGet(String accessToken, List query, SuccessCallback callback, DeviceVerGetFailureCallback failureCallback){
     DeviceVerGetRequest request = new DeviceVerGetRequest(shareChannel(),
       clientId: clientId,
       reqTime: _getReqTime(),
       signKey: _getMd5(),);
 
-    request.deviceVerGet(accessToken, null, failureCallback).then((onValue){
+    request.deviceVerGet(accessToken, query, failureCallback).then((onValue){
       if (onValue == null) return;
       callback({
-
+        'models':onValue
       });
     });
   }
@@ -973,7 +996,7 @@ class HttpManage{
         houseGuid,
         areaGuid,
         deviceId,
-        subDeviceId='',
+        subDeviceId,
         failureCallback,
     ).then((onValue){
       if (onValue == null) return;
@@ -996,6 +1019,27 @@ class HttpManage{
       areaGuid,
       deviceId,
       subDeviceId,
+      failureCallback,
+    ).then((onValue){
+      if (onValue == null) return;
+      callback({
+
+      });
+    });
+  }
+
+  //用户设置小区
+  void userAddrSet(String accessToken, String siteName, int longitude, int latitude, SuccessCallback callback, UserAddrSetFailureCallback failureCallback){
+    UserAddrSetRequest request = new UserAddrSetRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userAddrSet(
+      accessToken,
+      siteName,
+      longitude,
+      latitude,
       failureCallback,
     ).then((onValue){
       if (onValue == null) return;
@@ -1050,4 +1094,123 @@ class HttpManage{
   }
 
 
+  //添加家人
+  void userFRSAdd(String accessToken, String relationUserName, int relationCode, SuccessCallback callback, UserFRSAddFailureCallback failureCallback){
+    UserFRSAddRequest request = new UserFRSAddRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userFRSAdd(accessToken, relationUserName, relationCode, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //获取家人
+  void userFRSList(String accessToken, SuccessCallback callback, UserFRSListFailureCallback failureCallback){
+    UserFRSListRequest request = new UserFRSListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userFRSList(accessToken, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //确认家人
+  void userFRSConfirm(String accessToken, String relationUserName, int action, SuccessCallback callback, UserFRSConfirmFailureCallback failureCallback){
+    UserFRSConfirmRequest request = new UserFRSConfirmRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userFRSConfirm(accessToken, relationUserName, action, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //删除家人
+  void userFRSDel(String accessToken, String relationUserName, SuccessCallback callback, UserFRSDelFailureCallback failureCallback){
+    UserFRSDelRequest request = new UserFRSDelRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.userFRSDel(accessToken, relationUserName, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+  //获取关系表
+  void relationList(String accessToken, int page, int pageSize, int relationCode, SuccessCallback callback, RelationListCallback failureCallback){
+    RelationListRequest request = new RelationListRequest(shareChannel(),
+      clientId: clientId,
+      reqTime: _getReqTime(),
+      signKey: _getMd5(),);
+
+    request.relationList(accessToken, page, pageSize, relationCode, failureCallback).then((onValue){
+      if (onValue == null) return;
+      callback({
+        'models':onValue
+      });
+    });
+  }
+
+
 }
+
+
+/***
+
+    问题：
+    1、不同家庭下，不能添加同一设备
+    2、开启场景后从新获取得到的enable状态为0，显示为始终未开启状态
+    3、获取家人列表出现数据库操作错误(userFRSList)
+    4、获取关系列表出现数据库操作错误(relationList)
+    5、设置个人信息成功之后重新获取信息未改变(UserAttrSet,UserAttrGet)
+    6、不同用户添加不能都添加同一设备
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

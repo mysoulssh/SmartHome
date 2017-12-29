@@ -47,7 +47,7 @@ class _DeviceAddSceneState extends State<DeviceAddScene>{
     if (widget.isEditScene) {
       for (var v in widget.sceneInfoModel.cmd.cmd){
         _cell.add(new SceneCell(model: new ActionSceneCellModel(
-          image: new Image(image: new AssetImage('images/testIcon.jpg')),
+          image: new Image(image: new AssetImage(TypeJudgment.judgmentDeviceImage(v.subDeviceId.substring(4,8)))),
           deviceName: TypeJudgment.judgmentType(v.subDeviceId.substring(4,8)),
           location: '控制器',
           status: v.argInt32.first==1?0:1,

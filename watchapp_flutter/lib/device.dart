@@ -11,6 +11,9 @@ import 'deviceItems/device_class_scene.dart';
 import 'deviceItems/models/house_device_info_model.dart';
 import 'deviceItems/models/scene_info_model.dart';
 import 'grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
+import 'grpc_src/dart_out/DeviceStatusGet/DeviceStatusGet.pb.dart';
+import 'package:watchapp_flutter/deviceItems/models/status_info_model.dart';
+import 'package:watchapp_flutter/Tools/type_judgment.dart';
 
 enum SceneType{
   SceneRoom,    //房间
@@ -50,7 +53,7 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
   bool bellSwitch          = false;
   bool tvSwitch            = false;
 
-  List<Widget> gridsRoom = <Widget>[];
+  List<Widget> gridsRoom = <SwitchRoomClass>[];
   List<Widget> gridsClass = <Widget>[];
 
   List<HouseDeviceInfoModel> cameraList         = <HouseDeviceInfoModel>[];
@@ -91,23 +94,60 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
 
       sceneList.removeRange(0, sceneList.length);
 
+      List<Scene> tmpSceneList = <Scene>[];
+
       List<SceneInfoModel> sceneModels = map['models'];
       for (var v in sceneModels){
-        scene.add(new Scene('images/testIcon.jpg','images/icon_home2_s.png',v.sceneName,v.sceneId,v.enable));
+
+        if (v.sceneId == '0a0a79f667629ea6cecd8dc225ffefb0'){       //回家
+          tmpSceneList.add(new Scene('images/icon_home2_n.png', 'images/icon_home2_s.png', '回家','0a0a79f667629ea6cecd8dc225ffefb0',v.enable),);
+        }else if (v.sceneId == 'b2f2363f56da29b458ce80e64db856c0'){ //离家
+          tmpSceneList.add(new Scene('images/icon_outhome_n.png', 'images/icon_outhome_s.png', '离家','b2f2363f56da29b458ce80e64db856c0',v.enable));
+        }else if (v.sceneId == 'abff0f9c08f344ec9a77d992829b7922'){ //起床
+          tmpSceneList.add(new Scene('images/icon_wakeup_n.png', 'images/icon_wakeup_s.png', '起床','abff0f9c08f344ec9a77d992829b7922',v.enable));
+        }else if (v.sceneId == '94013c4ed339c072d869dddc2577105d'){ //睡觉
+          tmpSceneList.add(new Scene('images/icon_sleep_n.png', 'images/icon_sleep_s.png', '睡觉','94013c4ed339c072d869dddc2577105d',v.enable));
+        }else{
+          tmpSceneList.add(new Scene('images/testIcon.jpg','images/icon_home2_s.png',v.sceneName,v.sceneId,v.enable));
+        }
+
+      }
+      
+      for (var v in scene){
+        bool isSame = false;
+        for (var tmp in tmpSceneList){
+          if (v.sceneId == tmp.sceneId){
+            isSame = true;
+            break;
+          }
+        }
+
+        if (!isSame){
+          tmpSceneList.insert(0, v);
+        }
       }
 
-      for (var v = 0; v< scene.length; v++){
-        Scene sceneInfo = scene[v];
+      for (var v = 0; v< tmpSceneList.length; v++){
+        Scene sceneInfo = tmpSceneList[v];
         SceneInfoModel sceneInfoModel = new SceneInfoModel()
-        ..sceneName = sceneInfo.text
-        ..sceneId   = sceneInfo.sceneId
-        ..sceneType = 1
-        ..cmd       = new IOTCMD();
-        if (v > 3){
-          sceneInfoModel = sceneModels[v-4];
+          ..houseGuid = widget.currentHouseGuid
+          ..sceneName = sceneInfo.text
+          ..sceneId   = sceneInfo.sceneId
+          ..sceneType = 1
+          ..enable    = sceneInfo.enable
+          ..cmd       = new IOTCMD();
+
+        for (var tmp in sceneModels){
+          if (tmp.sceneId == sceneInfo.sceneId){
+            sceneInfoModel = tmp;
+            break;
+          }
         }
+
         sceneList.add(_createSceneBtn(sceneInfo, sceneInfoModel));
       }
+
+      scene = tmpSceneList;
 
       setState((){});
     }, (String errorMsg){
@@ -121,9 +161,93 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
       gridsRoom.removeRange(0, gridsRoom.length);
       List<AreaInfoModel> models = map['areas'];
       for (var v in models){
-        gridsRoom.add(_switchRoom('images/icon_bedroom.png',v.areaName,false,'6/6',false,v.areaGuid));
+        v.isSwitchOn = false;
+
+        httpManage.houseDeviceList(
+            UserAccessModel.accessModel.accessToken,
+            widget.currentHouseGuid,
+            1,
+            20,
+            (Map map){
+
+              List<HouseDeviceInfoModel> models = map['models'];
+              List<QueryInfo> tmpQuery = <QueryInfo>[];
+
+              for (var v in models){
+                QueryInfo info = new QueryInfo()
+                ..deviceId    = v.deviceId
+                ..subDeviceId = v.subDeviceId;
+                tmpQuery.add(info);
+              }
+
+              if (tmpQuery.length > 0){
+                httpManage.deviceStatusGet(UserAccessModel.accessModel.accessToken, tmpQuery, (Map map){
+                  List<StatusInfoModel> models = map['models'];
+                  List<bool> tmpStatus = <bool>[];
+                  List<bool> openStatus = <bool>[];
+
+                  for (var statusV in models){
+                    if(statusV.subDeviceId != ''){
+                      tmpStatus.add(TypeJudgment.judgmentSwitch(statusV, statusV.subDeviceId.substring(4,8)));
+                    }else{
+                      tmpStatus.add(false);
+                    }
+                  }
+
+                  for (var v in tmpStatus){
+                    if (v){
+                      openStatus.add(v);
+                    }
+                  }
+
+                  int totalNum = tmpStatus.length;
+                  int openNum  = openStatus.length;
+
+                  if (totalNum == openNum && totalNum != 0){
+                    v.isSwitchOn = true;
+                    gridsRoom.add(new SwitchRoomClass(
+                      typeImage: TypeJudgment.judgmentAreaImage(v.areaName),
+                      typeText: v.areaName,
+                      isSwitchOn: v.isSwitchOn,
+                      numText: '$openNum/$totalNum',
+                      isNewImage: false,
+                      areaGuid: v.areaGuid,
+                      currentHouseGuid: widget.currentHouseGuid,
+                    ));
+                  }else{
+                    v.isSwitchOn = false;
+                    gridsRoom.add(new SwitchRoomClass(
+                      typeImage: TypeJudgment.judgmentAreaImage(v.areaName),
+                      typeText: v.areaName,
+                      isSwitchOn: v.isSwitchOn,
+                      numText: '$openNum/$totalNum',
+                      isNewImage: false,
+                      areaGuid: v.areaGuid,
+                      currentHouseGuid: widget.currentHouseGuid,
+                    ));
+                  }
+
+                  reload();
+                }, (String errorMsg){
+
+                });
+              }else{
+                gridsRoom.add(new SwitchRoomClass(
+                  typeImage: TypeJudgment.judgmentAreaImage(v.areaName),
+                  typeText: v.areaName,
+                  isSwitchOn: false,
+                  numText: '0/0',
+                  isNewImage: false,
+                  areaGuid: v.areaGuid,
+                  currentHouseGuid: widget.currentHouseGuid,
+                ));
+                reload();
+              }
+
+            }, (String errorMsg){},
+            areaGuid: v.areaGuid);
+
       }
-      reload();
     }, (String errorMsg){
 
     });
@@ -206,12 +330,71 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
       String tvNum      = tvList.length.toString();
       String centerNum  = centerControlList.length.toString();
 
-      gridsClass.add(_switchRoom('images/icon_canmera.png', '摄像头', cameraSwitch, '$cameraNum/$cameraNum', true, ''));
-      gridsClass.add(_switchRoom('images/icon_light.png','灯',lightSwitch, '$lightNum/$lightNum',true,''));
-      gridsClass.add(_switchRoom('images/icon_inductor.png','感应器',decSwitch,'$decNum/$decNum',true,''));
-      gridsClass.add(_switchRoom('images/icon_doorbell.png', '门铃', bellSwitch, '$bellNum/$bellNum',true,''));
-      gridsClass.add(_switchRoom('images/icon_livingroom.png', '电视', tvSwitch, '$tvNum/$tvNum',false,''));
-      gridsClass.add(_switchRoom('images/icon_centercontrol.png', '中控', centerControlSwitch, '$centerNum/$centerNum',true,''));
+      gridsClass.add(new SwitchRoomClass(
+        typeImage: 'images/icon_canmera.png',
+        typeText: '摄像头',
+        isSwitchOn: false,
+        numText: '$cameraNum/$cameraNum',
+        isNewImage: true,
+        areaGuid: '',
+        deviceList: cameraList,
+        currentHouseGuid: widget.currentHouseGuid,
+      ));
+
+      gridsClass.add(new SwitchRoomClass(
+        typeImage: 'images/icon_light.png',
+        typeText: '灯',
+        isSwitchOn: false,
+        numText: '$lightNum/$lightNum',
+        isNewImage: true,
+        areaGuid: '',
+        deviceList: lightList,
+        currentHouseGuid: widget.currentHouseGuid,
+      ));
+
+      gridsClass.add(new SwitchRoomClass(
+        typeImage: 'images/icon_inductor.png',
+        typeText: '感应器',
+        isSwitchOn: false,
+        numText: '$decNum/$decNum',
+        isNewImage: true,
+        areaGuid: '',
+        deviceList: dectectorList,
+        currentHouseGuid: widget.currentHouseGuid,
+      ));
+
+      gridsClass.add(new SwitchRoomClass(
+        typeImage: 'images/icon_doorbell.png',
+        typeText: '门铃',
+        isSwitchOn: false,
+        numText: '$bellNum/$bellNum',
+        isNewImage: true,
+        areaGuid: '',
+        deviceList: bellList,
+        currentHouseGuid: widget.currentHouseGuid,
+      ));
+
+      gridsClass.add(new SwitchRoomClass(
+        typeImage: 'images/icon_livingroom.png',
+        typeText: '电视',
+        isSwitchOn: false,
+        numText: '$tvNum/$tvNum',
+        isNewImage: false,
+        areaGuid: '',
+        deviceList: tvList,
+        currentHouseGuid: widget.currentHouseGuid,
+      ));
+
+      gridsClass.add(new SwitchRoomClass(
+        typeImage: 'images/icon_centercontrol.png',
+        typeText: '中控',
+        isSwitchOn: false,
+        numText: '$centerNum/$centerNum',
+        isNewImage: true,
+        areaGuid: '',
+        deviceList: centerControlList,
+        currentHouseGuid: widget.currentHouseGuid,
+      ));
 
       setState((){});
 
@@ -236,17 +419,65 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
               children: <Widget>[
                 new GestureDetector(
                   onTap: (){
-                    _resetSelectStatu();
-                    sceneInfo.enable = 1;
-                    sceneList.removeRange(0, sceneList.length);
-                    for (var v in scene){
-                      sceneList.add(_createSceneBtn(v, sceneInfoModel));
-                    }
-
                     httpManage.sceneActive(UserAccessModel.accessModel.accessToken, widget.currentHouseGuid, sceneInfo.sceneId, (Map map){
+                      _resetSelectStatu();
+                      sceneInfo.enable = 1;
+                      sceneList.removeRange(0, sceneList.length);
+                      for (var v in scene){
+                        sceneList.add(_createSceneBtn(v, sceneInfoModel));
+                      }
                       reload();
                     }, (String errorMsg){
+                      if (sceneInfo.sceneId == '0a0a79f667629ea6cecd8dc225ffefb0' ||  //回家
+                          sceneInfo.sceneId == 'b2f2363f56da29b458ce80e64db856c0' ||  //离家
+                          sceneInfo.sceneId == 'abff0f9c08f344ec9a77d992829b7922' ||  //起床
+                          sceneInfo.sceneId == '94013c4ed339c072d869dddc2577105d' ){    //睡觉
+                        showDialog(context: context, child: new AlertDialog(
+                          title: new Text('提示'),
+                          content: new Text('还未对该场景进行编辑，是否进入编辑?'),
+                          actions: <Widget>[
+                            new FlatButton(onPressed: (){
+                              Navigator.of(context).pop();
 
+                              DeviceAddScene addScene = new DeviceAddScene(false,sceneTitle: sceneInfoModel.sceneName, sceneId: sceneInfoModel.sceneId,);
+                              Navigator.of(context).push(new MaterialPageRoute(
+                                  builder: (BuildContext context) => new NavigationBar(addScene, '编辑场景',
+                                    actions: <Widget>[
+                                      //添加场景界面保存按钮
+                                      new RightBtnItem('保存', (){
+                                        print('保存');
+                                        if(addScene.cmd.length > 0){
+                                          IOTCMD iotCmd = new IOTCMD();
+                                          for (var v in addScene.cmd){
+                                            iotCmd.cmd.add(v);
+                                          }
+                                          //添加场景
+                                          httpManage.sceneAdd(
+                                              UserAccessModel.accessModel.accessToken,
+                                              widget.currentHouseGuid,
+                                              addScene.sceneState.editController.text,
+                                              addScene.sceneId,
+                                              iotCmd,
+                                                  (Map map){
+                                                print('添加场景成功');
+                                                Navigator.of(context).pop();
+                                              },
+                                                  (String errorMsg){
+                                                print('添加场景错误信息：$errorMsg');
+                                              });
+                                        }
+                                      })
+                                    ],
+                                  )
+                              ));
+
+                            }, child: new Text('确定')),
+                            new FlatButton(onPressed: (){
+                              Navigator.of(context).pop();
+                            }, child: new Text('取消')),
+                          ],
+                        ));
+                      }
                     });
 
                   },
@@ -292,147 +523,6 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
     );
   }
 
-  Widget _switchRoom(String typeImage,String typeText,bool isSwitchOn,String numText,bool isNewImage,String areaGuid){
-    return new GestureDetector(
-      onTap: (){
-        print('$typeText');
-        if (areaGuid == ''){
-
-          DeviceClassScene classScene;
-
-          if (typeText == '摄像头'){
-            classScene = new DeviceClassScene(cameraList,false);
-          }else if (typeText == '灯'){
-            classScene = new DeviceClassScene(lightList,false);
-          }else if (typeText == '感应器'){
-            classScene = new DeviceClassScene(dectectorList,false);
-          }else if (typeText == '门铃'){
-            classScene = new DeviceClassScene(bellList,false);
-          }else if (typeText == '电视'){
-            classScene = new DeviceClassScene(tvList,false);
-          }else if (typeText == '中控'){
-            classScene = new DeviceClassScene(centerControlList,true);
-          }
-
-          Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
-            return new NavigationBar(classScene, typeText,
-//              actions: <Widget>[
-//                new RightBtnItem('添加', (){
-//                  print('添加');
-//                  DeviceScene deviceScene = new DeviceScene('添加设备',EnterType.typeDevice,callback: (String id, String subId){
-//                    print('id = $id     subid = $subId');
-//                  },);
-//
-//                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context){
-//                    return new NavigationBar(deviceScene, '添加设备');
-//                  }));
-//                })
-//              ],
-            );
-          }));
-        }else{
-          //家庭二id 7d8b0bc7-177a-430c-a797-7c0b9dd5c970
-          //我的家id 376f8854-d2f2-45e9-b696-e5b8db4c3a80
-          DeviceAreaScene deviceAreaScene = new DeviceAreaScene(typeText, widget.currentHouseGuid, areaGuid);
-          Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
-            return new NavigationBar(deviceAreaScene, typeText,
-              actions: <Widget>[
-                new RightBtnItem('添加', (){
-                  print('添加');
-                  DeviceScene deviceScene = new DeviceScene('添加设备',EnterType.typeDevice,callback: (String id, String subId){
-                    deviceAreaScene.sceneState.addAreaDevice(id, subId);
-                  },);
-                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context){
-                    return new NavigationBar(deviceScene, '添加设备');
-                  }));
-                })
-              ],
-            );
-          }));
-        }
-      },
-      child: new Container(
-        color: Colors.white,
-        child: new Column(
-          children: <Widget>[
-            new Stack(
-              alignment: AlignmentDirectional.topCenter,
-              children: <Widget>[
-                new Container(
-                  child: new SizedBox(
-                    width: 150.0,
-                    height: 70.0,
-                    child: isNewImage?new Container(
-                      padding: const EdgeInsets.all(15.0),
-                      child: new Image(image: new AssetImage(typeImage)),
-                    ):new Container(
-                      child: new Image(image: new AssetImage(typeImage)),
-                    ),
-                  ),
-                ),
-                new Container(
-                  padding: const EdgeInsets.only(top: 60.0),
-                  child: new Text(typeText,style: new TextStyle(
-                      color: new Color.fromRGBO(232, 153, 110, 1.0),
-                      fontSize: 16.0
-                  ),),
-                ),
-              ],
-            ),
-            new GestureDetector(
-              onTap: (){
-                setState((){
-                  if (typeText == '摄像头'){
-                    cameraSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '灯'){
-                    lightSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '感应器'){
-                    decSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '门铃'){
-                    bellSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '电视'){
-                    tvSwitch = isSwitchOn = !isSwitchOn;
-                  }else if (typeText == '中控'){
-                    centerControlSwitch = isSwitchOn = !isSwitchOn;
-                  }
-                });
-              },
-              child: new Stack(
-                children: <Widget>[
-                  new Container(
-                    padding: const EdgeInsets.fromLTRB(4.0,15.0,0.0,0.0),
-                    child: new SizedBox(
-                      width: 80.0,
-                      height: 30.0,
-                      child: new Image(image: new AssetImage(isSwitchOn?'images/btn_switch_bg2.png':'images/btn_switch_bg1.png')),
-                    ),
-                  ),
-                  new Container(
-                    padding: isSwitchOn?const EdgeInsets.fromLTRB(50.0,10.0,0.0,0.0):const EdgeInsets.only(top: 10.0),
-                    child: new SizedBox(
-                      width: 37.0,
-                      height: 40.0,
-                      child: new Image(image: new AssetImage('images/btn_switch.png')),
-                    ),
-                  ),
-                  new Container(
-                    padding: isSwitchOn?const EdgeInsets.fromLTRB(15.0, 22.0, 0.0, 0.0):const EdgeInsets.fromLTRB(45.0, 22.0, 0.0, 0.0),
-                    child: new Text(
-                      numText,
-                      style: new TextStyle(
-                          fontSize: 15.5,
-                          color: isSwitchOn?const Color.fromRGBO(249, 199, 170, 1.0):const Color.fromRGBO(232, 153, 110, 1.0)
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _createSceneRoom(){
     return new Expanded(child: new Container(
@@ -459,42 +549,6 @@ class _DeviceItemState extends State<DeviceItem> with SingleTickerProviderStateM
         itemBuilder: (BuildContext context, int index) => gridsClass[index],
         itemCount: gridsClass.length,
       ),
-    ));
-  }
-
-  Widget _createSceneClass(){
-    return new Expanded(child: new Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: <Widget>[
-        new Expanded(child: new Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(0.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_canmera.png','摄像头',cameraSwitch,'6/6',true,''),
-            )),
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_light.png','灯',lightSwitch,'2/3',true,''),
-            )),
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 1.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_inductor.png','感应器',decSwitch,'2/3',true,''),
-            )),
-          ],
-        )),
-        new Expanded(child: new Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(0.0,0.0,0.0,1.0),
-              child: _switchRoom('images/icon_doorbell.png', '门铃', bellSwitch, '6/6',true,''),
-            )),
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 0.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_livingroom.png', '电视', tvSwitch, '1/2',false,''),
-            )),
-            new Expanded(child: new Padding(padding: const EdgeInsets.fromLTRB(1.0, 0.0, 0.0, 1.0),
-              child: _switchRoom('images/icon_centercontrol.png', '中控', centerControlSwitch, '2/3',true,''),
-            )),
-          ],
-        ))
-      ],
     ));
   }
 
@@ -627,4 +681,162 @@ class Scene{
   final String sceneId;
   //是否开启
   int enable;
+}
+
+class SwitchRoomClass extends StatefulWidget{
+
+  SwitchRoomClass({
+    this.typeImage,
+    this.typeText,
+    this.isSwitchOn : false,
+    this.numText,
+    this.isNewImage : false,
+    this.areaGuid,
+    this.currentHouseGuid,
+    this.deviceList,
+  });
+
+  String typeImage;
+  String typeText;
+  bool isSwitchOn;
+  String numText;
+  bool isNewImage;
+  String areaGuid;
+  String currentHouseGuid;
+  List<HouseDeviceInfoModel> deviceList;
+
+  @override
+  _SwitchRoomClassState createState() => new _SwitchRoomClassState();
+
+}
+
+class _SwitchRoomClassState extends State<SwitchRoomClass>{
+  @override
+  Widget build(BuildContext context){
+    return new Container(
+      child: new GestureDetector(
+        onTap: (){
+          if (widget.areaGuid == ''){
+
+            DeviceClassScene classScene;
+
+            if (widget.typeText == '摄像头'){
+              classScene = new DeviceClassScene(widget.deviceList,false);
+            }else if (widget.typeText == '灯'){
+              classScene = new DeviceClassScene(widget.deviceList,false);
+            }else if (widget.typeText == '感应器'){
+              classScene = new DeviceClassScene(widget.deviceList,false);
+            }else if (widget.typeText == '门铃'){
+              classScene = new DeviceClassScene(widget.deviceList,false);
+            }else if (widget.typeText == '电视'){
+              classScene = new DeviceClassScene(widget.deviceList,false);
+            }else if (widget.typeText == '中控'){
+              classScene = new DeviceClassScene(widget.deviceList,true);
+            }
+
+            Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
+              return new NavigationBar(classScene, widget.typeText,
+//              actions: <Widget>[
+//                new RightBtnItem('添加', (){
+//                  print('添加');
+//                  DeviceScene deviceScene = new DeviceScene('添加设备',EnterType.typeDevice,callback: (String id, String subId){
+//                    print('id = $id     subid = $subId');
+//                  },);
+//
+//                  Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context){
+//                    return new NavigationBar(deviceScene, '添加设备');
+//                  }));
+//                })
+//              ],
+              );
+            }));
+          }else{
+            DeviceAreaScene deviceAreaScene = new DeviceAreaScene(widget.typeText, widget.currentHouseGuid, widget.areaGuid);
+            Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) {
+              return new NavigationBar(deviceAreaScene, widget.typeText,
+                actions: <Widget>[
+                  new RightBtnItem('添加', (){
+                    print('添加');
+                    DeviceScene deviceScene = new DeviceScene('添加设备',EnterType.typeDevice,callback: (String id, String subId){
+                      deviceAreaScene.sceneState.addAreaDevice(id, subId);
+                    },);
+                    Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context){
+                      return new NavigationBar(deviceScene, '添加设备');
+                    }));
+                  })
+                ],
+              );
+            }));
+          }
+        },
+        child: new Container(
+          color: Colors.white,
+          child: new Column(
+            children: <Widget>[
+              new Stack(
+                alignment: AlignmentDirectional.topCenter,
+                children: <Widget>[
+                  new Container(
+                    child: new SizedBox(
+                      width: 150.0,
+                      height: 70.0,
+                      child: widget.isNewImage?new Container(
+                        padding: const EdgeInsets.all(15.0),
+                        child: new Image(image: new AssetImage(widget.typeImage)),
+                      ):new Container(
+                        child: new Image(image: new AssetImage(widget.typeImage)),
+                      ),
+                    ),
+                  ),
+                  new Container(
+                    padding: const EdgeInsets.only(top: 60.0),
+                    child: new Text(widget.typeText,style: new TextStyle(
+                        color: new Color.fromRGBO(232, 153, 110, 1.0),
+                        fontSize: 16.0
+                    ),),
+                  ),
+                ],
+              ),
+              new GestureDetector(
+                onTap: (){
+                  widget.isSwitchOn = !widget.isSwitchOn;
+                  setState((){});
+                },
+                child: new Stack(
+                  children: <Widget>[
+                    new Container(
+                      padding: const EdgeInsets.fromLTRB(4.0,15.0,0.0,0.0),
+                      child: new SizedBox(
+                        width: 80.0,
+                        height: 30.0,
+                        child: new Image(image: new AssetImage(widget.isSwitchOn?'images/btn_switch_bg2.png':'images/btn_switch_bg1.png')),
+                      ),
+                    ),
+                    new Container(
+                      padding: widget.isSwitchOn?const EdgeInsets.fromLTRB(50.0,10.0,0.0,0.0):const EdgeInsets.only(top: 10.0),
+                      child: new SizedBox(
+                        width: 37.0,
+                        height: 40.0,
+                        child: new Image(image: new AssetImage('images/btn_switch.png')),
+                      ),
+                    ),
+                    new Container(
+                      padding: widget.isSwitchOn?const EdgeInsets.fromLTRB(15.0, 22.0, 0.0, 0.0):const EdgeInsets.fromLTRB(45.0, 22.0, 0.0, 0.0),
+                      child: new Text(
+                        widget.numText,
+                        style: new TextStyle(
+                            fontSize: 15.5,
+                            color: widget.isSwitchOn?const Color.fromRGBO(249, 199, 170, 1.0):const Color.fromRGBO(232, 153, 110, 1.0)
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

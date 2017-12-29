@@ -41,7 +41,7 @@ class _AiActionState extends State<AiAction>{
           print('编辑规则');
           AiAddRule addRule = new AiAddRule(isEditRule: true,ruleName: v.etName, ruleInfo: v,);
           Navigator.of(context).push(new MaterialPageRoute(
-              builder: (BuildContext context) => new NavigationBar(addRule, '添加规则',
+              builder: (BuildContext context) => new NavigationBar(addRule, '编辑规则',
                 actions: <Widget>[
                   new GestureDetector(      //智能联动界面添加规则按钮
                     onTap: (){
@@ -65,7 +65,16 @@ class _AiActionState extends State<AiAction>{
           }, (String errorMsg){
             print('设置规则开关错误信息:$errorMsg');
           });
-        },));
+        },
+          deleteCallback: (onValue){
+            cell.remove(onValue);
+            httpManage.eventRuleDel(UserAccessModel.accessModel.accessToken, v.etId, (Map map){
+
+            }, (String errorMsg){
+
+            });
+          },
+        ));
       }
 
       setState((){});

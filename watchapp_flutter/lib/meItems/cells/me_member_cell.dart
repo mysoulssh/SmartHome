@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 enum MeMemberState{
-  meMemberStateNormal,      //正常情况
-  meMemberStateWaiting,     //等待情况
-  meMemberStateRefuse,      //拒绝情况
+  meMemberStateNormal,          //正常情况
+  meMemberStateWaiting,         //等待对方同意情况
+  meMemberStateRefuse,          //拒绝情况
+  meMemberStateWaitingConfirm,  //等待自己同意情况
 }
 
-typedef void CellSelectedCallback();
+typedef void CellSelectedCallback(MeMemberState tmpState);
 
 class MeMemberCell extends StatefulWidget{
 
@@ -62,6 +63,14 @@ class _MeMemberCellState extends State<MeMemberCell>{
         ));
       }
       break;
+      case MeMemberState.meMemberStateWaitingConfirm:{
+        stateScene = new Expanded(child: new Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 8.0),
+            child: new Text('好友申请',style: new TextStyle(color: Colors.blue),)
+        ));
+      }
+      break;
     }
     return stateScene;
   }
@@ -71,7 +80,7 @@ class _MeMemberCellState extends State<MeMemberCell>{
     return new GestureDetector(
       onTap: (){
         if(widget.callback != null){
-          widget.callback();
+          widget.callback(widget.memberState);
         }
       },
       child: new Container(
@@ -101,7 +110,7 @@ class _MeMemberCellState extends State<MeMemberCell>{
                     ),
                     new Padding(
                       padding: const EdgeInsets.only(bottom: 0.0),
-                      child: new Text(widget.relation),
+                      child: widget.memberState == MeMemberState.meMemberStateWaitingConfirm?new Text('请求添加您为:${widget.relation}'):new Text(widget.relation),
                     )
                   ],
                 ),

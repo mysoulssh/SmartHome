@@ -69,9 +69,9 @@ class _DeviceCenterControlState extends State<DeviceCenterControl>{
             if (deviceDetailInfoModel.prodtCode.first == 'YHUB'){
               _cell.add(new ActionSceneCell(
                 tmpModel: new ActionSceneCellModel(
-                    image: new Image(image: new AssetImage('images/testIcon.jpg')),
+                    image: new Image(image: new AssetImage('images/icon_centercontrol.png')),
                     deviceName: deviceInfoModel.deviceName,
-                    location: '未知',
+                    location: '控制器',
                     status: i,
                     deviceId: deviceInfoModel.deviceId
                 ),

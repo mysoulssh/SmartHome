@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'me_identify_scene.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
+import 'models/user_info_model.dart';
+import 'package:watchapp_flutter/grpc_src/dart_out/UserFRSList/UserFRSList.pb.dart';
 
 typedef CellSelectCallback(int index);
 
 
 class MeMemberDetailInfoScene extends StatefulWidget{
+
+  MeMemberDetailInfoScene({this.userInfoModel, this.frsInfo});
+
+  final UserInfoModel userInfoModel;
+  final FRSInfo frsInfo;
 
   @override
   _MeMemberDetailInfoSceneState createState() => new _MeMemberDetailInfoSceneState();
@@ -16,7 +21,7 @@ class MeMemberDetailInfoScene extends StatefulWidget{
 class _MeMemberDetailInfoSceneState extends State<MeMemberDetailInfoScene>{
 
   List<String> infoList = <String>['关系','我的昵称', '我的小区', '性别', '出生日期', '身高', '体重', '运动目标'];
-  List<String> contentList = <String>['哥哥','来去之间', '孵化园', '男', '1999年9月9日', '178cm', '60kg', '10000步'];
+  List<String> contentList = <String>['','', '', '', '', '', '', ''];
   List<Widget> infoSceneList = <Widget>[];
 
   final TextEditingController likeNameController = new TextEditingController();
@@ -43,20 +48,44 @@ class _MeMemberDetailInfoSceneState extends State<MeMemberDetailInfoScene>{
   }
 
   void initList(){
+
+    contentList.removeRange(0, contentList.length);
+
+    String likeName = widget.userInfoModel.like_name==''?'':widget.userInfoModel.like_name;
+    String siteName = widget.userInfoModel.site_name==''?'未设置':widget.userInfoModel.site_name;
+    String sex      = widget.userInfoModel.sex==0?'未设置':(widget.userInfoModel.sex==1?'男':'女');
+    String year     = widget.userInfoModel.birth_year?.toString();
+    String month    = widget.userInfoModel.birth_month?.toString();
+    String day      = widget.userInfoModel.birth_day?.toString();
+    String birthday = year=='0'?'未设置':'$year年$month月$day日';
+    String height   = widget.userInfoModel.height?.toString();
+    String weight   = widget.userInfoModel.weight?.toString();
+    String target   = widget.userInfoModel.target_step?.toString();
+
+
+    contentList.add('未知');
+    contentList.add(likeName);
+    contentList.add(siteName);
+    contentList.add(sex);
+    contentList.add(birthday);
+    contentList.add(height);
+    contentList.add(weight);
+    contentList.add(target);
+
     for(int i=0; i<infoList.length; i++){
       infoSceneList.add(createCell(infoList[i], i, contentList[i], (int index){
         print('$index');
-        if (index == 3){
-          selectSex(index);
-        }else if (index == 4){
-          showDate(index);
-        }else if(index == 5){
-          changeDialog('身高',index,'请输入您的身高（单位cm）',heightController);
-        }else if(index == 6){
-          changeDialog('体重',index,'请输入您的体重（单位kg）',weightController);
-        }else if(index == 7){
-          changeDialog('运动目标',index,'请输入您运动目标（单位步）',stepController);
-        }
+//        if (index == 3){
+//          selectSex(index);
+//        }else if (index == 4){
+//          showDate(index);
+//        }else if(index == 5){
+//          changeDialog('身高',index,'请输入您的身高（单位cm）',heightController);
+//        }else if(index == 6){
+//          changeDialog('体重',index,'请输入您的体重（单位kg）',weightController);
+//        }else if(index == 7){
+//          changeDialog('运动目标',index,'请输入您运动目标（单位步）',stepController);
+//        }
       }));
     }
 

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:watchapp_flutter/Tools/action_btn.dart';
 import 'ai_deviceinfo_scene.dart';
 import 'package:watchapp_flutter/main_navbar.dart';
-//import 'package:watchapp_flutter/Tools/http_manage.dart';
-//import 'package:http/src/response.dart';
-//import 'dart:convert';
+import 'package:watchapp_flutter/Tools/type_judgment.dart';
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
+import 'package:watchapp_flutter/grpc_src/dart_out/DeviceVerGet/DeviceVerGet.pb.dart';
 
 
 enum DeviceType{
@@ -15,10 +16,19 @@ enum DeviceType{
 
 class AiSettingScene extends StatefulWidget{
 
-  AiSettingScene(this.type,this.deviceName);
+  AiSettingScene(
+      this.type,
+      this.deviceName,
+      this.deviceType,
+      this.deviceId,
+      this.subDeviceId,
+      );
 
   final DeviceType type;
   String deviceName;
+  String deviceType;
+  String deviceId;
+  String subDeviceId;
 
   @override
   _AiSettingSceneState createState() => new _AiSettingSceneState();
@@ -29,23 +39,35 @@ class _AiSettingSceneState extends State<AiSettingScene>{
   final TextEditingController controller = new TextEditingController();
 
   @override
+  void initState(){
+    super.initState();
+
+    getDeviceVer();
+  }
+
+  void getDeviceVer(){
+    QueryInfo queryInfo = new QueryInfo()
+    ..deviceId    = widget.deviceId
+    ..subDeviceId = widget.subDeviceId;
+
+    httpManage.deviceVerGet(UserAccessModel.accessModel.accessToken, [queryInfo], (Map map){
+
+      var v = map['models'];
+      print('$v');
+
+      setState((){});
+    }, (String errorMsg){
+
+    });
+  }
+
+  @override
   Widget build(BuildContext context){
     return new Container(
       child: new Column(
         children: <Widget>[
           new GestureDetector(
             onTap: (){
-
-//              HttpManage.get((Response respone){
-//                var body = respone.body;
-//                var editBody = body.substring(5,body.length-1);
-//                Map data = JSON.decode(editBody);
-//                var dataList = data['result'];
-//                print('$dataList');
-//              },(Error error){
-//
-//              });
-
               print('详情');
               AiDeviceInfoScene infoScene = new AiDeviceInfoScene();
               Navigator.of(context).push(new MaterialPageRoute(
@@ -61,7 +83,7 @@ class _AiSettingSceneState extends State<AiSettingScene>{
                     child: new SizedBox(
                       width: 50.0,
                       height: 50.0,
-                      child: new Image(image: new AssetImage('images/testIcon.jpg')),
+                      child: new Image(image: new AssetImage(TypeJudgment.judgmentDeviceImage(widget.deviceType))),
                     ),
                   ),
                   new Expanded(child: new Row(
@@ -159,7 +181,13 @@ class _AiSettingSceneState extends State<AiSettingScene>{
           new Expanded(child: new Center(
             child: new ActionBtn(text: '删除设备',callback: (){
               print('删除设备');
-              Navigator.of(context).pop();
+
+              httpManage.deviceDel(UserAccessModel.accessModel.accessToken, widget.deviceId, widget.subDeviceId, (Map map){
+                Navigator.of(context).pop();
+              }, (String errorMsg){
+
+              });
+
             },),
           ))
         ],

@@ -90,23 +90,14 @@ class _DeviceAreaSceneState extends State<DeviceAreaScene>{
               houseDeviceInfoModel: deviceInfoModel,
               deviceDetailInfoModel: detailInfoModel,
               statusInfoModel: statusInfoModel,
-              image: new Image(image: const AssetImage('images/testIcon.jpg')),
-              isTurnOn: false,
-              isNeedSwitch: true,
-              callback: (String deviceId, String subId){
-                delAreaDevice(deviceId,subId);
+              image: new Image(image: new AssetImage(TypeJudgment.judgmentDeviceImage(deviceInfoModel.prodtType.first))),
+              isTurnOn: TypeJudgment.judgmentSwitch(statusInfoModel, deviceInfoModel.prodtType.first),
+              isNeedSwitch: deviceInfoModel.prodtType.first != 'YHUB',
+              deleteCallback: (onValue){
+                _cell.remove(onValue);
+                DeviceSceneCell tmp = onValue;
+                delAreaDevice(tmp.deviceDetailInfoModel.deviceId,tmp.statusInfoModel.subDeviceId);
               },
-//              controlCallback: (){
-//                DeviceCenterControlScene controlScene = new DeviceCenterControlScene(deviceInfoModel.deviceId, (String devId, String subId){
-//                  addAreaDevice(devId, subId);
-//                },false);
-//                Navigator.of(context).push(new MaterialPageRoute<Null>(builder: (BuildContext context) => new NavigationBar(
-//                  controlScene,
-//                  deviceInfoModel.deviceName,
-//                ))).then((onValue){
-//
-//                });
-//              },
             ));
           }
 
@@ -114,54 +105,6 @@ class _DeviceAreaSceneState extends State<DeviceAreaScene>{
         }, (String errorMsg){
 
         });
-
-
-        /*
-        httpManage.deviceInfoGet(deivceIds, UserAccessModel.accessModel.accessToken, (Map map){
-          List<DeviceDetailInfoModel> detailInfo = map['models'];
-          httpManage.deviceStatusGet(UserAccessModel.accessModel.accessToken, queryInfos, (Map map){
-            List<StatusInfoModel> statusInfo = map['models'];
-
-            _cell.removeRange(0, _cell.length);
-
-            for(var i=0; i< infoModels.length; i++){
-
-              HouseDeviceInfoModel deviceInfoModel  = infoModels[i];
-              DeviceDetailInfoModel detailInfoModel = detailInfo[i];
-              StatusInfoModel statusInfoModel       = statusInfo[i];
-
-              _cell.add(new DeviceSceneCell(
-                houseDeviceInfoModel: deviceInfoModel,
-                deviceDetailInfoModel: detailInfoModel,
-                statusInfoModel: statusInfoModel,
-                image: new Image(image: const AssetImage('images/testIcon.jpg')),
-                isTurnOn: false,
-                isNeedSwitch: detailInfoModel.prodtCode.first != 'YHUB',
-                callback: (String deviceId, String subId){
-                  delAreaDevice(deviceId,subId);
-                },
-                controlCallback: (){
-                  DeviceCenterControlScene controlScene = new DeviceCenterControlScene(deviceInfoModel.deviceId, (String devId, String subId){
-                    addAreaDevice(devId, subId);
-                  },false);
-                  Navigator.of(context).push(new MaterialPageRoute<Null>(builder: (BuildContext context) => new NavigationBar(
-                      controlScene,
-                      deviceInfoModel.deviceName,
-                  ))).then((onValue){
-
-                  });
-                },
-              ));
-            }
-
-            setState((){});
-          }, (String errorMsg){
-
-          });
-        }, (String errorMsg){
-
-        });
-        */
 
       }else{
         _cell.removeRange(0, _cell.length);
@@ -174,13 +117,13 @@ class _DeviceAreaSceneState extends State<DeviceAreaScene>{
   }
 
   void delAreaDevice(String deviceId, String subId){
+
     httpManage.houseAreaDeviceDel(UserAccessModel.accessModel.accessToken, widget.houseGuid, widget.areaGuid, deviceId, subId, (Map map){
-      loadAreaList();
+      print('删除成功');
     }, (String errorMsg){
 
     });
   }
-
 
   @override
   Widget build(BuildContext context){

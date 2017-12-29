@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:watchapp_flutter/Tools/action_btn.dart';
 import 'dart:ui' show window;
+import 'package:watchapp_flutter/Tools/http_manage.dart';
+import 'package:watchapp_flutter/Tools/user_access_model.dart';
 
 class MeAddMemberSecondScene extends StatefulWidget{
+
+  MeAddMemberSecondScene(
+      this.relationName,
+      this.relationCode,
+      this.cellPhone,
+      this.cardId,
+      );
+
+  final String relationName;
+  final int relationCode;
+  final String cellPhone;
+  final String cardId;
+
+
   @override
   _MeAddMemberSecondSceneState createState() => new _MeAddMemberSecondSceneState();
 }
@@ -149,7 +165,14 @@ class _MeAddMemberSecondSceneState extends State<MeAddMemberSecondScene>{
           new Container(
             padding: const EdgeInsets.only(top: 80.0),
             child: new ActionBtn(text: '完成',callback: (){
-
+              httpManage.userFRSAdd(UserAccessModel.accessModel.accessToken, widget.cellPhone, widget.relationCode, (Map map){
+                print('添加家人成功');
+                
+                Navigator.of(context).pop();
+                
+              }, (String errorMsg){
+                
+              });
             },),
           )
         ],

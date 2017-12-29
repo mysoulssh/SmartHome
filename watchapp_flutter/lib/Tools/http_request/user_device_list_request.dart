@@ -31,13 +31,12 @@ class UserDeviceListRequest {
       ..page = page
       ..pageSize = pageSize;
 
-    List<DeviceInfoModel> infoModels;
+    List<DeviceInfoModel> infoModels = <DeviceInfoModel>[];
 
     try{
       RpcResponse response = await shareRpcYCall().yCall(rpcRequest);
 
       if (response.total != 0){
-        infoModels = <DeviceInfoModel>[];
 
         for (var tmp in response.devs){
           DeviceInfoModel model = new DeviceInfoModel()
@@ -54,7 +53,7 @@ class UserDeviceListRequest {
       List<String> errorList = error.split(',');
       print('error = $errorList');
       if(failureCallback != null){
-        failureCallback(errorList[2]);
+        failureCallback(errorList.last);
       }
     }
 

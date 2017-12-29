@@ -15,4 +15,7 @@ class AreaInfoModel{
   //设备个数
   String deviceNum;
 
+  //是否开启
+  bool isSwitchOn;
+
 }

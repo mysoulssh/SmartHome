@@ -8,6 +8,7 @@ import 'package:watchapp_flutter/deviceItems/models/device_info_model.dart';
 import 'package:watchapp_flutter/deviceItems/models/device_detail_info_model.dart';
 import 'package:watchapp_flutter/grpc_src/dart_out/iot_comm/iot_comm.pb.dart';
 import 'package:watchapp_flutter/Tools/show_infos_tool.dart';
+import 'package:watchapp_flutter/Tools/type_judgment.dart';
 
 typedef void CellsSelectCallback(int i);
 typedef void SaveCallback(ConditonType type, List<String> conditionTextList, List<DecState> conditionStates, List<ExprInfo> exprInfos);
@@ -27,7 +28,6 @@ class AiAddCondition extends StatefulWidget{
 class _AiAddConditionState extends State<AiAddCondition>{
 
   List<Widget> cells = <Widget>[];
-  List<String> imageNames = <String>['images/testIcon.jpg','images/testIcon.jpg','images/testIcon.jpg'];
 
   @override
   void initState(){
@@ -52,7 +52,7 @@ class _AiAddConditionState extends State<AiAddCondition>{
             DeviceDetailInfoModel deviceDetailInfoModel = detailInfoModels[i];
 
             if (deviceInfoModel.deviceId.substring(3,4) != 'C'){
-              cells.add(createList('images/testIcon.jpg', deviceInfoModel.deviceName, 1, (int index){
+              cells.add(createList(TypeJudgment.judgmentDeviceImage(deviceDetailInfoModel.prodtCode.first), deviceInfoModel.deviceName, 1, (int index){
                 String id = deviceDetailInfoModel.deviceId;
                 String type = deviceDetailInfoModel.prodtCode.first;
                 print('id = $id \ntype = $type');
@@ -77,7 +77,7 @@ class _AiAddConditionState extends State<AiAddCondition>{
             }
           }
 
-          cells.add(createList('images/testIcon.jpg', '时间', -1, (int index){
+          cells.add(createList('images/img_clock.png', '时间', -1, (int index){
             print('$index 选择时间');
 
             TextEditingController startController = new TextEditingController();

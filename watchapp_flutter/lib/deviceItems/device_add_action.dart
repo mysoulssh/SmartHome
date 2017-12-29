@@ -46,7 +46,7 @@ class _DeviceAddActionState extends State<DeviceAddAction>{
         String type = v.subDeviceId.substring(3,4);
         if (type == 'C'){
           _cell.add(new ActionSceneCell(tmpModel: new ActionSceneCellModel(
-            image: new Image(image: new AssetImage('images/testIcon.jpg')),
+            image: new Image(image: new AssetImage(TypeJudgment.judgmentDeviceImage(type))),
             deviceName: TypeJudgment.judgmentType(v.subDeviceId.substring(4,8)),
             location: '控制器',
             deviceId: widget.deviceId,
