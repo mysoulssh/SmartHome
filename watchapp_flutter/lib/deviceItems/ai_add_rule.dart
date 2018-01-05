@@ -54,87 +54,89 @@ class _AiAddRuleState extends State<AiAddRule>{
     }
 
     if (widget.isEditRule){
-      _controller.text = widget.ruleName;
+//      _controller.text = widget.ruleName;
+//
+//      for (var v in widget.ruleInfo.rhs){     //遍历动作
+//
+//        String text1 = TypeJudgment.judgmentType(v.cmd.subDeviceId!=null||v.cmd.subDeviceId!=''?v.cmd.subDeviceId.substring(4,8):v.cmd.deviceId.substring(4,8));
+//
+//        String text2 = '';
+//        if (v.cmd.argInt32.length != 0 && v.cmd.argInt32 != null){    //数值动作
+//          text2 = v.cmd.argInt32.first == 1?'开启':'关闭';
+//        }
+//
+//        DeviceRuleType ruleType = TypeJudgment.judgmentDeviceRuleType(v.cmd.subDeviceId!=null||v.cmd.subDeviceId!=''?v.cmd.subDeviceId.substring(4,8):v.cmd.deviceId.substring(4,8));
+//
+//        AiAddRuleCell ruleCell = new AiAddRuleCell(
+//          text1: text1,
+//          text2: text2,
+//          text3: '一直持续',
+//          deviceRuleType: ruleType,
+//          controlCallback: (){
+//            switch (ruleType){
+//              case DeviceRuleType.DeviceRuleTypeSwitch:     //开关
+//                {
+//                  AiSwitchScene switchScene = new AiSwitchScene(isSwitchOn: v.cmd.argInt32.first == 1, callback: (bool isOpen){
+//                    SIOTCMD cmd = new SIOTCMD()
+//                      ..deviceId = v.cmd.deviceId
+//                      ..subDeviceId = v.cmd.subDeviceId
+//                      ..cmdid = 201
+//                      ..argInt32.add(isOpen?1:0);
+//
+//                    v.actionType = 1;
+//                    v.cmd = cmd;
+//
+//                  },);
+//                  Navigator.of(context).push(new MaterialPageRoute(
+//                      builder: (BuildContext context) => new NavigationBar(switchScene, text1,
+//                        actions: <Widget>[
+//                          new RightBtnItem('设置', (){
+//                            print('设置');
+//                          })
+//                        ],)
+//                  ));
+//                }
+//                break;
+//              case DeviceRuleType.DeviceRuleTypeScene:      //场景
+//                break;
+//              case DeviceRuleType.DeviceRuleTypeLight:      //灯光
+//                {
+//                  AiLightScene lightScene = new AiLightScene(isSwitchOn: v.cmd.argInt32.first == 1, changeColorsCallback: (int r, int g, int b){
+//                    print('r = $r   g = $g   b = $b');
+//                    SIOTCMD cmd = new SIOTCMD()
+//                      ..deviceId = v.cmd.deviceId
+//                      ..subDeviceId = v.cmd.subDeviceId
+//                      ..cmdid = 201
+//                      ..argInt32.add(1);
+//
+//                    v.actionType = 1;
+//                    v.cmd = cmd;
+//
+//                  },);
+//                  Navigator.of(context).push(new MaterialPageRoute(
+//                      builder: (BuildContext context) => new NavigationBar(lightScene, text1,
+//                        actions: <Widget>[
+//                          new RightBtnItem('设置', (){
+//                            print('设置');
+//                          })
+//                        ],)
+//                  ));
+//                }
+//                break;
+//              case DeviceRuleType.DeviceRuleTypeCommon:     //大众
+//                break;
+//            }
+//          },
+//          timeCallback: (){
+//            print('时间回调');
+//          },
+//        );
+//
+//        ruleActionCell.add(ruleCell);
+//        print('$v');
+//      }
 
-      for (var v in widget.ruleInfo.rhs){     //遍历动作
-
-        String text1 = TypeJudgment.judgmentType(v.cmd.subDeviceId!=null||v.cmd.subDeviceId!=''?v.cmd.subDeviceId.substring(4,8):v.cmd.deviceId.substring(4,8));
-
-        String text2 = '';
-        if (v.cmd.argInt32.length != 0 && v.cmd.argInt32 != null){    //数值动作
-          text2 = v.cmd.argInt32.first == 1?'开启':'关闭';
-        }
-
-        DeviceRuleType ruleType = TypeJudgment.judgmentDeviceRuleType(v.cmd.subDeviceId!=null||v.cmd.subDeviceId!=''?v.cmd.subDeviceId.substring(4,8):v.cmd.deviceId.substring(4,8));
-
-        AiAddRuleCell ruleCell = new AiAddRuleCell(
-          text1: text1,
-          text2: text2,
-          text3: '一直持续',
-          deviceRuleType: ruleType,
-          controlCallback: (){
-            switch (ruleType){
-              case DeviceRuleType.DeviceRuleTypeSwitch:     //开关
-                {
-                  AiSwitchScene switchScene = new AiSwitchScene(isSwitchOn: v.cmd.argInt32.first == 1, callback: (bool isOpen){
-                    SIOTCMD cmd = new SIOTCMD()
-                      ..deviceId = v.cmd.deviceId
-                      ..subDeviceId = v.cmd.subDeviceId
-                      ..cmdid = 201
-                      ..argInt32.add(isOpen?1:0);
-
-                    v.actionType = 1;
-                    v.cmd = cmd;
-
-                  },);
-                  Navigator.of(context).push(new MaterialPageRoute(
-                      builder: (BuildContext context) => new NavigationBar(switchScene, text1,
-                        actions: <Widget>[
-                          new RightBtnItem('设置', (){
-                            print('设置');
-                          })
-                        ],)
-                  ));
-                }
-                break;
-              case DeviceRuleType.DeviceRuleTypeScene:      //场景
-                break;
-              case DeviceRuleType.DeviceRuleTypeLight:      //灯光
-                {
-                  AiLightScene lightScene = new AiLightScene(isSwitchOn: v.cmd.argInt32.first == 1, changeColorsCallback: (int r, int g, int b){
-                    print('r = $r   g = $g   b = $b');
-                    SIOTCMD cmd = new SIOTCMD()
-                      ..deviceId = v.cmd.deviceId
-                      ..subDeviceId = v.cmd.subDeviceId
-                      ..cmdid = 201
-                      ..argInt32.add(1);
-
-                    v.actionType = 1;
-                    v.cmd = cmd;
-
-                  },);
-                  Navigator.of(context).push(new MaterialPageRoute(
-                      builder: (BuildContext context) => new NavigationBar(lightScene, text1,
-                        actions: <Widget>[
-                          new RightBtnItem('设置', (){
-                            print('设置');
-                          })
-                        ],)
-                  ));
-                }
-                break;
-              case DeviceRuleType.DeviceRuleTypeCommon:     //大众
-                break;
-            }
-          },
-          timeCallback: (){
-
-          },
-        );
-
-        ruleActionCell.add(ruleCell);
-        print('$v');
-      }
+      riActions();
     }
 
     insetIndex = 2;
@@ -217,6 +219,9 @@ class _AiAddRuleState extends State<AiAddRule>{
     conditionList.add(new GestureDetector(
       onTap: (){
         print('添加条件');
+
+        print('${widget.ruleInfo.exprs}');
+
         AiAddCondition addCondition = new AiAddCondition(existExps: widget.ruleInfo.exprs,callback: (ConditonType type, List<String> conditionTextList, List<DecState> conditionStates, List<ExprInfo> exprInfos){
 
           for (var v in exprInfos){
@@ -224,6 +229,11 @@ class _AiAddRuleState extends State<AiAddRule>{
           }
 
           print('\ntype = $type  \nconditionTextList = $conditionTextList \nconditionSelectList = $conditionStates');
+
+          if (ruleActionCell.length > 0){
+            conditionList.removeRange(conditionList.length-ruleActionCell.length, conditionList.length);
+          }
+
           if (type == ConditonType.ConditionDec){         //传感器
             List<String> tmpList = <String>[];
             for (int i=0;i<conditionStates.length;i++){
@@ -248,8 +258,6 @@ class _AiAddRuleState extends State<AiAddRule>{
               }
             }
 
-            setState((){});
-
             for (String tmp in tmpList){
               conditionTextList.remove(tmp);
             }
@@ -262,9 +270,25 @@ class _AiAddRuleState extends State<AiAddRule>{
             int endMinute = (exprInfos.first.endTime%3600~/60).toInt();
 
             conditionList.insert(insetIndex, createDecCondition('时间', true, '$startHour:$startMinute 至 $endHour:$endMinute', ''));
-            setState((){});
+
             Navigator.of(context).pop();
           }
+
+          riActions();
+
+          for (AiAddRuleCell cell in ruleActionCell){
+            conditionList.add(new AiAddRuleCell(
+              text1: cell.text1,
+              text2: cell.text2,
+              text3: cell.text3,
+              deviceRuleType: cell.deviceRuleType,
+              subDeviceInfoModel: cell.subDeviceInfoModel,
+              statusInfoModel: cell.statusInfoModel,
+              controlCallback: cell.controlCallback,
+              timeCallback: cell.timeCallback,
+            ));
+          }
+
         },);
         Navigator.of(context).push(new MaterialPageRoute(
             builder: (BuildContext context) => new NavigationBar(addCondition, '添加条件')
@@ -330,6 +354,92 @@ class _AiAddRuleState extends State<AiAddRule>{
       }
     }
 
+  }
+
+  void riActions(){
+    _controller.text = widget.ruleName;
+
+    ruleActionCell.removeRange(0, ruleActionCell.length);
+
+    for (var v in widget.ruleInfo.rhs){     //遍历动作
+
+      String text1 = TypeJudgment.judgmentType(v.cmd.subDeviceId!=null||v.cmd.subDeviceId!=''?v.cmd.subDeviceId.substring(4,8):v.cmd.deviceId.substring(4,8));
+
+      String text2 = '';
+      if (v.cmd.argInt32.length != 0 && v.cmd.argInt32 != null){    //数值动作
+        text2 = v.cmd.argInt32.first == 1?'开启':'关闭';
+      }
+
+      DeviceRuleType ruleType = TypeJudgment.judgmentDeviceRuleType(v.cmd.subDeviceId!=null||v.cmd.subDeviceId!=''?v.cmd.subDeviceId.substring(4,8):v.cmd.deviceId.substring(4,8));
+
+      AiAddRuleCell ruleCell = new AiAddRuleCell(
+        text1: text1,
+        text2: text2,
+        text3: '一直持续',
+        deviceRuleType: ruleType,
+        controlCallback: (){
+          switch (ruleType){
+            case DeviceRuleType.DeviceRuleTypeSwitch:     //开关
+              {
+                AiSwitchScene switchScene = new AiSwitchScene(isSwitchOn: v.cmd.argInt32.first == 1, callback: (bool isOpen){
+                  SIOTCMD cmd = new SIOTCMD()
+                    ..deviceId = v.cmd.deviceId
+                    ..subDeviceId = v.cmd.subDeviceId
+                    ..cmdid = 201
+                    ..argInt32.add(isOpen?1:0);
+
+                  v.actionType = 1;
+                  v.cmd = cmd;
+
+                },);
+                Navigator.of(context).push(new MaterialPageRoute(
+                    builder: (BuildContext context) => new NavigationBar(switchScene, text1,
+                      actions: <Widget>[
+                        new RightBtnItem('设置', (){
+                          print('设置');
+                        })
+                      ],)
+                ));
+              }
+              break;
+            case DeviceRuleType.DeviceRuleTypeScene:      //场景
+              break;
+            case DeviceRuleType.DeviceRuleTypeLight:      //灯光
+              {
+                AiLightScene lightScene = new AiLightScene(isSwitchOn: v.cmd.argInt32.first == 1, changeColorsCallback: (int r, int g, int b){
+                  print('r = $r   g = $g   b = $b');
+                  SIOTCMD cmd = new SIOTCMD()
+                    ..deviceId = v.cmd.deviceId
+                    ..subDeviceId = v.cmd.subDeviceId
+                    ..cmdid = 201
+                    ..argInt32.add(1);
+
+                  v.actionType = 1;
+                  v.cmd = cmd;
+
+                },);
+                Navigator.of(context).push(new MaterialPageRoute(
+                    builder: (BuildContext context) => new NavigationBar(lightScene, text1,
+                      actions: <Widget>[
+                        new RightBtnItem('设置', (){
+                          print('设置');
+                        })
+                      ],)
+                ));
+              }
+              break;
+            case DeviceRuleType.DeviceRuleTypeCommon:     //大众
+              break;
+          }
+        },
+        timeCallback: (){
+          print('时间回调');
+        },
+      );
+
+      ruleActionCell.add(ruleCell);
+      print('$v');
+    }
   }
 
   Widget createDecCondition(String decName, bool isTurnOn, String openStr, String closeStr){
